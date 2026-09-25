@@ -1,0 +1,4 @@
+# The image copies nothing from the repository (source is bind-mounted by
+# compose.yaml), so exclude everything — this keeps datasets, outputs and
+# checkpoints out of the build context and out of image layers.
+*

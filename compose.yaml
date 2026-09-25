@@ -1,0 +1,23 @@
+services:
+  learning3d:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: learning3d:cu130-ubuntu22.04
+    # Keep the container alive for `docker compose exec learning3d bash`;
+    # init makes `docker compose down` stop it immediately.
+    command: ["sleep", "infinity"]
+    init: true
+    stdin_open: true
+    tty: true
+    gpus: all
+    # DataLoader workers (train_model.py uses num_workers=4) need more than the 64 MB default.
+    shm_size: 8gb
+    working_dir: /workspace/learning3d
+    volumes:
+      - .:/workspace/learning3d
+      # Persists torch hub / pretrained weight downloads across container recreation.
+      - learning3d-cache:/home/dev/.cache
+
+volumes:
+  learning3d-cache:
