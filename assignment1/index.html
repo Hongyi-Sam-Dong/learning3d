@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Assignment 1</title>
+
+  <style>
+    body {
+      max-width: 900px;
+      margin: 40px auto 80px;
+      padding: 0 20px;
+      font-family: Arial, Helvetica, sans-serif;
+      line-height: 1.5;
+      color: #222;
+    }
+
+    h1 {
+      margin-bottom: 4px;
+    }
+
+    h2 {
+      margin-top: 50px;
+      border-bottom: 1px solid #ccc;
+      padding-bottom: 6px;
+    }
+
+    h3 {
+      margin-top: 28px;
+    }
+
+    img {
+      max-width: 100%;
+      height: auto;
+    }
+
+    figure {
+      text-align: center;
+      margin: 20px 0;
+    }
+
+    figcaption {
+      margin-top: 6px;
+      color: #555;
+      font-size: 0.92rem;
+    }
+
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 18px;
+    }
+
+    .row figure {
+      margin: 0;
+    }
+
+    .transform {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      margin: 24px 0;
+    }
+
+    .transform img {
+      width: 200px;
+    }
+
+    code {
+      font-family: monospace;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>Assignment 1 — Rendering Basics with PyTorch3D</h1>
+  <p>Hongyi (Sam) Dong</p>
+
+
+  <h2>1. Practicing with Cameras</h2>
+
+  <h3>1.1 360-degree Renders</h3>
+
+  <figure>
+    <img src="output/cow_360.gif" width="256">
+  </figure>
+
+
+  <h3>1.2 Re-creating the Dolly Zoom</h3>
+
+  <figure>
+    <img src="images/dolly.gif" width="256">
+  </figure>
+
+
+  <h2>2. Practicing with Meshes</h2>
+
+  <h3>2.1 Constructing a Tetrahedron</h3>
+
+  <p>
+    Number of vertices: 4<br>
+    Number of triangular faces: 4
+  </p>
+
+  <figure>
+    <img src="output/tetrahedron.gif" width="256">
+  </figure>
+
+
+  <h3>2.2 Constructing a Cube</h3>
+
+  <p>
+    Number of vertices: 8<br>
+    Number of triangular faces: 12
+  </p>
+
+  <figure>
+    <img src="output/cube.gif" width="256">
+  </figure>
+
+
+  <h2>3. Re-texturing a Mesh</h2>
+
+  <p>
+    I chose <code>color1 = [1.0, 0.0, 0.0]</code> (red) and
+    <code>color2 = [0.0, 1.0, 1.0]</code> (cyan). Red and cyan are complementary
+    colors, so they provide strong visual contrast across the cow. I also wanted
+    to use a different color pairing from the blue/red example, so I replaced
+    blue with cyan.
+  </p>
+
+  <figure>
+    <img src="output/cow_texture.gif" width="256">
+  </figure>
+
+
+<h2>4. Camera Transformations</h2>
+
+<h3>Baseline Camera</h3>
+
+<pre><code>R0 =                 T0 =
+[ 1  0  0 ]          [ 0 ]
+[ 0  1  0 ]          [ 0 ]
+[ 0  0  1 ]          [ 3 ]</code></pre>
+
+<figure>
+  <img src="images/transform_none.jpg" width="256">
+</figure>
+
+<h3>Transformation 1</h3>
+
+<p>
+  <code>R_relative</code> rolls the camera 90 degrees around its viewing
+  Z axis, while <code>T_relative</code> is zero because the camera position
+  remains unchanged.
+</p>
+
+<pre><code>R_relative =         T_relative =
+[  0  1  0 ]         [ 0 ]
+[ -1  0  0 ]         [ 0 ]
+[  0  0  1 ]         [ 0 ]</code></pre>
+
+<figure>
+  <img src="images/transform1.jpg" width="256">
+</figure>
+
+
+<h3>Transformation 2</h3>
+
+<p>
+  <code>R_relative</code> rotates the camera 90 degrees around the world
+  Y axis, while <code>T_relative</code> moves the camera to the opposite
+  side of the cow so that it remains in view.
+</p>
+
+<pre><code>R_relative =         T_relative =
+[  0  0  1 ]         [ -3 ]
+[  0  1  0 ]         [  0 ]
+[ -1  0  0 ]         [  3 ]</code></pre>
+
+<figure>
+  <img src="images/transform2.jpg" width="256">
+</figure>
+
+
+<h3>Transformation 3</h3>
+
+<p>
+  <code>R_relative</code> keeps the camera orientation unchanged, while
+  <code>T_relative</code> moves the camera farther backward along its
+  viewing Z axis.
+</p>
+
+<pre><code>R_relative =         T_relative =
+[ 1  0  0 ]          [ 0.0 ]
+[ 0  1  0 ]          [ 0.0 ]
+[ 0  0  1 ]          [ 1.5 ]</code></pre>
+
+<figure>
+  <img src="images/transform3.jpg" width="256">
+</figure>
+
+
+<h3>Transformation 4</h3>
+
+<p>
+  <code>R_relative</code> keeps the camera orientation unchanged, while
+  <code>T_relative</code> translates the camera parallel to the image
+  plane.
+</p>
+
+<pre><code>R_relative =         T_relative =
+[ 1  0  0 ]          [  0.5 ]
+[ 0  1  0 ]          [ -0.5 ]
+[ 0  0  1 ]          [  0.0 ]</code></pre>
+
+<figure>
+  <img src="images/transform4.jpg" width="256">
+</figure>
+
+
+  <h2>5. Rendering Generic 3D Representations</h2>
+
+  <h3>5.1 Rendering Point Clouds from RGB-D Images</h3>
+
+  <div class="row">
+    <figure>
+      <img src="output/plant_view1.gif" width="256">
+      <figcaption>RGB-D view 1</figcaption>
+    </figure>
+
+    <figure>
+      <img src="output/plant_view2.gif" width="256">
+      <figcaption>RGB-D view 2</figcaption>
+    </figure>
+
+    <figure>
+      <img src="output/plant_merged.gif" width="256">
+      <figcaption>Merged views</figcaption>
+    </figure>
+  </div>
+
+
+  <h3>5.2 Parametric Functions</h3>
+
+  <div class="row">
+    <figure>
+      <img src="output/torus.gif" width="256">
+      <figcaption>Torus point cloud</figcaption>
+    </figure>
+
+    <figure>
+      <img src="output/mobius.gif" width="256">
+      <figcaption>Möbius strip point cloud</figcaption>
+    </figure>
+  </div>
+
+
+  <h3>5.3 Implicit Surfaces</h3>
+
+  <div class="row">
+    <figure>
+      <img src="output/implicit_torus.gif" width="256">
+      <figcaption>Implicit torus mesh</figcaption>
+    </figure>
+
+    <figure>
+      <img src="output/implicit_ellipsoid.gif" width="256">
+      <figcaption>Implicit ellipsoid mesh</figcaption>
+    </figure>
+  </div>
+
+  <p>
+    Point clouds and meshes represent the same 3D surface in different ways.
+    In terms of rendering quality, meshes usually produce smoother and more
+    continuous surfaces because triangle connectivity is explicitly stored,
+    while sparse point clouds can contain visible gaps and depend strongly on
+    point density and rendering radius. In terms of memory, point clouds only
+    store point positions and features and do not require face connectivity;
+    however, a dense point cloud may require many more points to represent a
+    smooth surface. A mesh additionally stores triangle indices, but it can often
+    represent a continuous surface using relatively fewer vertices. In terms of
+    ease of use, point clouds are simple to obtain directly from RGB-D data or
+    sampled functions, while meshes are more suitable for rasterization,
+    shading, and explicit surface geometry. For implicit representations, an
+    additional extraction step such as Marching Cubes is required before the
+    surface can be rendered as a mesh.
+  </p>
+
+
+  <h2>6. Do Something Fun</h2>
+
+  <p>
+    I constructed a 3D smiley face by combining several parametric point-cloud
+    primitives. The head is sampled from a large parametric sphere, and the two
+    eyes are sampled from smaller spheres positioned on the front of the head.
+    The mouth is generated as a parametric tube following a circular arc, and
+    all of the sampled points and colors are concatenated into a single point
+    cloud before rendering.
+  </p>
+
+  <figure>
+    <img src="output/q6_smiley.gif" width="256">
+  </figure>
+
+
+  <h2>7. Sampling Points on Meshes</h2>
+
+  <p>
+    I uniformly sampled 10, 100, 1000, and 10000 points
+    from the surface of the cow mesh.
+  </p>
+
+  <figure>
+    <img src="output/q7_sampling.gif">
+  </figure>
+
+
+</body>
+
+</html>

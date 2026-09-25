@@ -1,0 +1,19 @@
+# Dataset
+r2n2_shapenet_dataset/
+r2n2_shapenet_dataset.zip
+r2n2_shapenet_dataset_full/
+
+# Generated outputs
+outputs/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Model checkpoints
+*.pth
+checkpoint_*.pth
+
+# Editor / OS
+.vscode/
+.DS_Store
