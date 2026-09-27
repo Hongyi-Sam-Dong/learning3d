@@ -1,13 +1,3 @@
-"""
-Q1 visualization: fit a voxel grid / point cloud / mesh to the first training
-sample (via fit_data.train_model) and render the optimized result next to the
-ground truth as 360-degree turntable GIFs plus a static side-by-side PNG.
-
-Usage:
-    python q1_viz.py --type vox   --device cpu
-    python q1_viz.py --type point --device cpu
-    python q1_viz.py --type mesh  --device cpu
-"""
 import argparse
 import os
 

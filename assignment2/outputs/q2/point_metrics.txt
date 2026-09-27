@@ -1,0 +1,18 @@
+type: point
+checkpoint: /workspace/learning3d/assignment2/checkpoint_point.pth
+n_points: 1000
+load_feat: False
+samples evaluated: 678 (full test split)
+seed: 0
+
+threshold  precision     recall         F1
+     0.01      6.062      2.647      3.371
+     0.02     29.666     15.640     18.977
+     0.03     53.073     40.210     43.595
+     0.04     68.704     64.744     64.926
+     0.05     78.775     79.923     78.218
+
+*** F1@0.05: 78.218 ***
+Average Precision@0.05: 78.775
+Average Recall@0.05: 79.923
+Average F1@0.05: 78.218

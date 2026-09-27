@@ -13,6 +13,14 @@ services:
     gpus: all
     # DataLoader workers (train_model.py uses num_workers=4) need more than the 64 MB default.
     shm_size: 8gb
+    # Workers forked after ResNet init deadlock in libgomp; one OpenMP thread avoids it.
+    environment:
+      OMP_NUM_THREADS: "1"
+    # Workers share tensors via file descriptors; the 1024 default runs out with many workers.
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
     working_dir: /workspace/learning3d
     volumes:
       - .:/workspace/learning3d

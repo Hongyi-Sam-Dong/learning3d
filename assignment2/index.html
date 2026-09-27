@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Assignment 2</title>
+
+  <style>
+    body {
+      max-width: 900px;
+      margin: 40px auto 80px;
+      padding: 0 20px;
+      font-family: Arial, Helvetica, sans-serif;
+      line-height: 1.5;
+      color: #222;
+    }
+
+    h1 {
+      margin-bottom: 4px;
+    }
+
+    h2 {
+      margin-top: 50px;
+      border-bottom: 1px solid #ccc;
+      padding-bottom: 6px;
+    }
+
+    h3 {
+      margin-top: 32px;
+    }
+
+    h4 {
+      margin-top: 24px;
+    }
+
+    img {
+      max-width: 100%;
+      height: auto;
+    }
+
+    figure {
+      text-align: center;
+      margin: 20px 0;
+    }
+
+    figcaption {
+      margin-top: 6px;
+      color: #555;
+      font-size: 0.92rem;
+    }
+
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: flex-start;
+      gap: 18px;
+    }
+
+    .row figure {
+      margin: 0;
+      flex: 1 1 380px;
+    }
+
+    code {
+      font-family: monospace;
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin: 18px 0;
+    }
+
+    th,
+    td {
+      border: 1px solid #ccc;
+      padding: 8px 10px;
+      text-align: left;
+    }
+
+    th {
+      background: #f5f5f5;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>Assignment 2 — Single View to 3D</h1>
+  <p>Hongyi (Sam) Dong</p>
+
+
+  <h2>1. Exploring Loss Functions</h2>
+
+  <p>
+    In this section, I directly optimized voxel, point-cloud, and mesh
+    representations to fit a target 3D object.
+  </p>
+
+
+  <h3>1.1 Fitting a Voxel Grid</h3>
+
+  <p>
+    For voxels, I used binary cross-entropy with logits because each voxel
+    represents binary occupancy.
+  </p>
+
+  <figure>
+    <img src="outputs/q1/vox_comparison.gif" width="512">
+    <figcaption>
+      Optimized voxel grid (left) and ground-truth voxel grid (right).
+    </figcaption>
+  </figure>
+
+
+  <h3>1.2 Fitting a Point Cloud</h3>
+
+  <p>
+    For point clouds, I used bidirectional Chamfer distance because point clouds
+    are unordered and there is no known one-to-one correspondence between points.
+  </p>
+
+  <figure>
+    <img src="outputs/q1/point_comparison.gif" width="512">
+    <figcaption>
+      Optimized point cloud (left) and ground-truth point cloud (right).
+    </figcaption>
+  </figure>
+
+
+  <h3>1.3 Fitting a Mesh</h3>
+
+  <p>
+    For meshes, I used Chamfer loss to match the target surface and Laplacian
+    smoothness loss to encourage locally smooth geometry.
+  </p>
+
+  <figure>
+    <img src="outputs/q1/mesh_comparison.gif" width="512">
+    <figcaption>
+      Optimized mesh (left) and ground-truth mesh (right).
+    </figcaption>
+  </figure>
+
+
+
+  <h2>2. Reconstructing 3D from a Single RGB Image</h2>
+
+  <p>
+    For all three representations, I use a ResNet18 image encoder to produce a
+    512-dimensional feature from a single RGB image. A representation-specific
+    decoder then predicts the final 3D output.
+  </p>
+
+
+  <h3>2.1 Voxel Prediction</h3>
+
+  <p>
+    The voxel decoder maps the 512-dimensional image feature into a
+    <code>32 × 32 × 32</code> occupancy grid. The model is trained with binary
+    cross-entropy with logits.
+  </p>
+
+  <figure>
+    <img src="outputs/q2/vox_examples.png">
+    <figcaption>
+      Input RGB, predicted voxel reconstruction, and ground-truth mesh.
+    </figcaption>
+  </figure>
+
+  <figure>
+    <img src="outputs/q2/vox_f1.png" width="500">
+    <figcaption>
+      Voxel F1 score at different distance thresholds.
+    </figcaption>
+  </figure>
+
+  <p>
+    <strong>F1@0.05:</strong> 58.814<br>
+    <strong>Precision@0.05:</strong> 67.264<br>
+    <strong>Recall@0.05:</strong> 55.003
+  </p>
+
+
+  <h3>2.2 Point Cloud Prediction</h3>
+
+  <p>
+    The point decoder maps the 512-dimensional image feature to
+    <code>N × 3</code> point coordinates. I use Chamfer loss because the predicted
+    and ground-truth point sets do not have a fixed correspondence.
+  </p>
+
+  <figure>
+    <img src="outputs/q2/point_examples.png">
+    <figcaption>
+      Input RGB, predicted point cloud, and ground-truth mesh.
+    </figcaption>
+  </figure>
+
+  <figure>
+    <img src="outputs/q2/point_f1.png" width="500">
+    <figcaption>
+      Point-cloud F1 score at different distance thresholds.
+    </figcaption>
+  </figure>
+
+  <p>
+    <strong>F1@0.05:</strong> 78.218<br>
+    <strong>Precision@0.05:</strong> 78.775<br>
+    <strong>Recall@0.05:</strong> 79.923
+  </p>
+
+  <p>
+    Although the point-cloud model obtains the highest F1 score, the qualitative
+    predictions are still relatively diffuse. This shows that a strong point-set
+    metric does not necessarily imply a visually clean reconstruction.
+  </p>
+
+
+  <h3>2.3 Mesh Prediction</h3>
+
+  <p>
+    The mesh decoder starts from an <code>ico_sphere(4)</code> template with 2562
+    vertices and predicts a displacement for every vertex. I use Chamfer loss
+    together with Laplacian smoothness regularization.
+  </p>
+
+  <figure>
+    <img src="outputs/q2/mesh_examples.png">
+    <figcaption>
+      Input RGB, predicted mesh, and ground-truth mesh.
+    </figcaption>
+  </figure>
+
+  <figure>
+    <img src="outputs/q2/mesh_f1.png" width="500">
+    <figcaption>
+      Mesh F1 score at different distance thresholds.
+    </figcaption>
+  </figure>
+
+  <p>
+    <strong>F1@0.05:</strong> 72.216<br>
+    <strong>Precision@0.05:</strong> 69.566<br>
+    <strong>Recall@0.05:</strong> 76.087
+  </p>
+
+
+  <h3>Comparison of Representations</h3>
+
+  <table>
+    <tr>
+      <th>Representation</th>
+      <th>F1@0.05</th>
+    </tr>
+    <tr>
+      <td>Voxel</td>
+      <td>58.814</td>
+    </tr>
+    <tr>
+      <td>Point Cloud</td>
+      <td>78.218</td>
+    </tr>
+    <tr>
+      <td>Mesh</td>
+      <td>72.216</td>
+    </tr>
+  </table>
+
+  <p>
+    The point-cloud representation obtains the highest F1 score, followed by the
+    mesh and voxel representations. Voxels are simple and easy to supervise, but
+    the fixed <code>32³</code> resolution limits geometric detail. Point clouds
+    provide flexible surface coverage, but they do not explicitly represent
+    connectivity. Meshes provide a connected surface, but fixed topology and
+    vertex deformation can introduce spikes and self-intersections.
+  </p>
+
+
+
+  <h3>2.4 Hyperparameter Study</h3>
+
+  <p>
+    I varied the number of predicted points while keeping the model architecture,
+    optimizer, learning rate, and training budget otherwise fixed. The baseline
+    predicts 1000 points, while the modified model predicts 500 points.
+  </p>
+
+  <div class="row">
+
+    <figure>
+      <img src="outputs/q2/point_examples.png">
+      <figcaption>
+        <code>n_points = 1000</code>
+      </figcaption>
+    </figure>
+
+    <figure>
+      <img src="outputs/q2_4/point_examples.png">
+      <figcaption>
+        <code>n_points = 500</code>
+      </figcaption>
+    </figure>
+
+  </div>
+
+  <table>
+    <tr>
+      <th>n_points</th>
+      <th>Precision@0.05</th>
+      <th>Recall@0.05</th>
+      <th>F1@0.05</th>
+    </tr>
+    <tr>
+      <td>1000</td>
+      <td>78.775</td>
+      <td>79.923</td>
+      <td>78.218</td>
+    </tr>
+    <tr>
+      <td>500</td>
+      <td>72.652</td>
+      <td>70.522</td>
+      <td>70.618</td>
+    </tr>
+  </table>
+
+  <p>
+    Reducing the number of predicted points from 1000 to 500 decreases
+    F1@0.05 from 78.218 to 70.618, a drop of 7.600 points. With fewer points,
+    the prediction has lower surface density and provides less complete coverage
+    of the target geometry.
+  </p>
+
+
+
+  <h3>2.5 Model Interpretability</h3>
+
+  <p>
+    I performed an input-occlusion experiment on the trained voxel model. For the
+    same input image, I masked the top, bottom, left, or right half of the image
+    and compared the resulting prediction with the original prediction.
+  </p>
+
+  <p>
+    The masked region is filled with the ImageNet mean RGB value. Because the
+    ResNet input is normalized using the same ImageNet mean, the masked area
+    becomes zero after normalization.
+  </p>
+
+  <figure>
+    <img src="outputs/q2_5/examples.png">
+    <figcaption>
+      Top row: original and masked RGB inputs. Bottom row: corresponding voxel
+      predictions.
+    </figcaption>
+  </figure>
+
+  <table>
+    <tr>
+      <th>Masked Region</th>
+      <th>Mean IoU with Original Prediction</th>
+    </tr>
+    <tr>
+      <td>Top</td>
+      <td>0.1223</td>
+    </tr>
+    <tr>
+      <td>Right</td>
+      <td>0.1757</td>
+    </tr>
+    <tr>
+      <td>Bottom</td>
+      <td>0.1880</td>
+    </tr>
+    <tr>
+      <td>Left</td>
+      <td>0.2764</td>
+    </tr>
+  </table>
+
+  <p>
+    Masking any half of the input image substantially changes the voxel
+    prediction. However, the most influential region is different for each test
+    example, so these results do not indicate one consistently dominant image
+    region. In addition, a large change in voxel occupancy does not always lead
+    to a lower reconstruction F1, meaning that a different prediction is not
+    necessarily a worse prediction.
+  </p>
+
+  <p>
+    This experiment measures sensitivity to a large artificial occlusion rather
+    than semantic importance directly, so the results should only be interpreted
+    as an input-sensitivity analysis.
+  </p>
+
+
+
+  <h2>3. Extensions</h2>
+
+
+  <h3>3.1 Implicit Network</h3>
+
+  <p>
+    I implemented an image-conditioned implicit occupancy function:
+  </p>
+
+  <p>
+    <code>f(image feature, x, y, z) → occupancy</code>
+  </p>
+
+  <p>
+    The ResNet18 encoder produces a 512-dimensional image feature. This feature is
+    concatenated with a 3D query coordinate, giving a 515-dimensional input to an
+    MLP with architecture
+    <code>515 → 512 → 256 → 128 → 1</code>.
+  </p>
+
+  <p>
+    During training, 4096 query points are sampled per object. During evaluation,
+    the network is queried over the full <code>32³</code> coordinate grid.
+  </p>
+
+  <figure>
+    <img src="outputs/q3_1/examples.png">
+    <figcaption>
+      Implicit-network reconstruction examples.
+    </figcaption>
+  </figure>
+
+  <figure>
+    <img src="outputs/q3_1/f1.png" width="500">
+    <figcaption>
+      Implicit-network F1 score.
+    </figcaption>
+  </figure>
+
+  <p>
+    <strong>F1@0.05:</strong> 39.091<br>
+    <strong>Checkpoint step:</strong> 6000
+  </p>
+
+  <p>
+    The implicit representation was more difficult to optimize than the direct
+    voxel decoder under this training setup. At step 6000, 129 out of 678 test
+    objects produced an empty predicted surface, resulting in a lower F1 than the
+    direct voxel baseline.
+  </p>
+
+
+
+  <h3>3.2 Parametric Network</h3>
+
+  <p>
+    I implemented an image-conditioned parametric surface function:
+  </p>
+
+  <p>
+    <code>g(image feature, u, v) → (x, y, z)</code>
+  </p>
+
+  <p>
+    The 512-dimensional image feature is concatenated with a 2D parameter
+    coordinate <code>(u, v)</code> sampled from <code>[-1,1]²</code>. The MLP
+    architecture is
+    <code>514 → 512 → 256 → 128 → 64 → 3</code>.
+  </p>
+
+  <p>
+    Because the UV samples do not have known one-to-one correspondence with the
+    target mesh points, I train the network with Chamfer loss.
+  </p>
+
+  <figure>
+    <img src="outputs/q3_2/examples.png">
+    <figcaption>
+      Parametric-network reconstruction examples.
+    </figcaption>
+  </figure>
+
+  <figure>
+    <img src="outputs/q3_2/f1.png" width="500">
+    <figcaption>
+      Parametric-network F1 score.
+    </figcaption>
+  </figure>
+
+  <p>
+    <strong>F1@0.05:</strong> 74.768<br>
+    <strong>Checkpoint step:</strong> 10000
+  </p>
+
+  <p>
+    The parametric network performs substantially better than the implicit model
+    in this experiment. One limitation is that a single 2D parameter domain has
+    to fold in 3D to represent complex surfaces, which can create stray bridging
+    points.
+  </p>
+
+
+
+  <h3>3.3 Extended Dataset</h3>
+
+  <p>
+    I trained the same voxel reconstruction architecture on an extended dataset
+    containing chairs, cars, and planes.
+  </p>
+
+  <table>
+    <tr>
+      <th>Class</th>
+      <th>Training Objects</th>
+      <th>Test Objects</th>
+      <th>F1@0.05</th>
+    </tr>
+    <tr>
+      <td>Chair</td>
+      <td>6100</td>
+      <td>678</td>
+      <td>37.572</td>
+    </tr>
+    <tr>
+      <td>Car</td>
+      <td>3146</td>
+      <td>368</td>
+      <td>30.866</td>
+    </tr>
+    <tr>
+      <td>Plane</td>
+      <td>3640</td>
+      <td>405</td>
+      <td>88.307</td>
+    </tr>
+    <tr>
+      <td>Overall</td>
+      <td>12886</td>
+      <td>1451</td>
+      <td>50.032</td>
+    </tr>
+  </table>
+
+  <figure>
+    <img src="outputs/q3_3/examples.png">
+    <figcaption>
+      Example reconstructions from the three-class model.
+    </figcaption>
+  </figure>
+
+  <figure>
+    <img src="outputs/q3_3/f1.png" width="500">
+    <figcaption>
+      Three-class model F1 scores.
+    </figcaption>
+  </figure>
+
+
+  <h4>Chair-only vs Three-class Training</h4>
+
+  <p>
+    I evaluated the original chair-only model and the three-class model on the
+    same 678 chair test objects. Both models receive the same RGB input view and
+    are evaluated against the same ground-truth surface samples.
+  </p>
+
+  <figure>
+    <img src="outputs/q3_3/chair_comparison.png">
+    <figcaption>
+      Input RGB, chair-only prediction, three-class prediction, and ground truth.
+    </figcaption>
+  </figure>
+
+  <figure>
+    <img src="outputs/q3_3/comparison_f1.png" width="500">
+    <figcaption>
+      Chair-only vs three-class F1 comparison.
+    </figcaption>
+  </figure>
+
+  <table>
+    <tr>
+      <th>Model</th>
+      <th>Chair F1@0.05</th>
+      <th>Voxel IoU vs GT</th>
+      <th>Empty Predictions</th>
+    </tr>
+    <tr>
+      <td>Chair-only</td>
+      <td>59.396</td>
+      <td>0.2499</td>
+      <td>7 / 678</td>
+    </tr>
+    <tr>
+      <td>Three-class</td>
+      <td>37.572</td>
+      <td>0.1546</td>
+      <td>91 / 678</td>
+    </tr>
+  </table>
+
+  <p>
+    On the paired chair test set, the three-class model scores 21.824 F1 points
+    lower than the chair-only model. The three-class model performs better on 132
+    chair samples, worse on 541, and equally on 5.
+  </p>
+
+  <p>
+    Under the current training budget, the three-class model therefore performs
+    worse on chair reconstruction. However, the chair-only model was trained to
+    step 10000 while the three-class checkpoint was saved at step 2000, so this
+    experiment does not show that multi-class training is inherently worse.
+    Training budget is an important confounding factor.
+  </p>
+
+  <p>
+    Performance also varies substantially by category. The plane class reaches
+    an F1@0.05 of 88.307, while chair and car reconstruction are considerably
+    more difficult for the current three-class model.
+  </p>
+
+
+
+  <h2>Training Details</h2>
+
+  <p>
+    I did not use the provided precomputed ResNet features. All experiments use
+    the live ResNet18 encoder (<code>load_feat = False</code>).
+  </p>
+
+  <table>
+    <tr>
+      <th>Model</th>
+      <th>Checkpoint Step</th>
+    </tr>
+    <tr>
+      <td>Part 2 Voxel</td>
+      <td>10000</td>
+    </tr>
+    <tr>
+      <td>Part 2 Point Cloud</td>
+      <td>2000</td>
+    </tr>
+    <tr>
+      <td>Part 2 Mesh</td>
+      <td>4000</td>
+    </tr>
+    <tr>
+      <td>Q3.1 Implicit</td>
+      <td>6000</td>
+    </tr>
+    <tr>
+      <td>Q3.2 Parametric</td>
+      <td>10000</td>
+    </tr>
+    <tr>
+      <td>Q3.3 Three-class Voxel</td>
+      <td>2000</td>
+    </tr>
+  </table>
+
+</body>
+
+</html>

@@ -1,0 +1,42 @@
+Q2.5 occlusion sensitivity of the Part 2 voxel model (inference only, no training)
+checkpoint: /workspace/learning3d/assignment2/checkpoint_vox.pth (step 10000)
+model: model.SingleViewto3D type=vox (ImageNet ResNet18 encoder on RGB, load_feat=False)
+test split: /workspace/learning3d/assignment2/r2n2_shapenet_dataset/split_03001627.json (chair test)
+test indices: [0, 1, 2]; input views (R2N2 view id): [6, 6, 0] (same as q2_viz.py with --seed 0)
+mask: one half of the 137x137 image (69 rows / columns), filled with ImageNet mean RGB (0.485, 0.456, 0.406) in [0, 1] (exactly 0 after the model's normalization)
+occupancy: sigmoid(logits) > 0.5 on the 32^3 grid
+IoU vs original: |occ_masked AND occ_orig| / |occ_masked OR occ_orig| (1 = unchanged; lower = hiding that half changed the prediction more)
+F1@0.05 vs GT: q2_viz.evaluate_sample (Part 2 voxel convention), secondary, for context only
+
+test idx condition  IoU vs orig  occupied  delta occ  F1@0.05
+       0  original       1.0000      3157         +0    82.42
+       0       top       0.2009       704      -2453    37.01
+       0    bottom       0.0617       611      -2546    34.61
+       0      left       0.4087      1334      -1823    53.60
+       0     right       0.3641      1635      -1522    51.25
+
+       1  original       1.0000       334         +0    51.26
+       1       top       0.0323        18       -316    24.98
+       1    bottom       0.0607       645       +311    50.72
+       1      left       0.1888       113       -221    24.46
+       1     right       0.0000         0       -334     0.00
+
+       2  original       1.0000      2331         +0    75.23
+       2       top       0.1337      1078      -1253    78.92
+       2    bottom       0.4416      1423       -908    77.32
+       2      left       0.2317       625      -1706    51.86
+       2     right       0.1629       403      -1928    50.71
+
+mean over the 3 examples
+     mask  IoU vs orig  |delta occ|  F1@0.05
+ original       1.0000          0.0    69.64
+      top       0.1223       1340.7    46.97
+   bottom       0.1880       1255.0    54.22
+     left       0.2764       1250.0    43.31
+    right       0.1757       1261.3    33.99
+
+masks ordered by mean IoU vs original (largest change first): top, right, bottom, left
+sanity check: original-vs-original IoU = 1.0, 1.0, 1.0
+
+Scope: this measures sensitivity of these predictions to hiding a large image half for the
+3 examples above. It does not establish which image region is semantically important in general.

@@ -1,0 +1,15 @@
+checkpoint: /workspace/learning3d/assignment2/checkpoint_q3_2.pth (step 10000)
+load_feat: False
+n_points (predicted = GT samples): 1000
+eval uv sampling: grid
+samples evaluated: 678 (full test split)
+seed: 0
+
+threshold  precision     recall         F1
+     0.01      5.699      3.801      4.238
+     0.02     27.071     20.702     22.574
+     0.03     49.957     42.915     45.046
+     0.04     65.932     61.697     62.762
+     0.05     76.299     74.723     74.768
+
+*** F1@0.05: 74.768 ***

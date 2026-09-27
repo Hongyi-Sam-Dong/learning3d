@@ -1,0 +1,20 @@
+type: vox
+checkpoint: /workspace/learning3d/assignment2/checkpoint_vox.pth
+n_points: 1000
+load_feat: False
+samples evaluated: 678 (full test split)
+seed: 0
+vox_threshold (on sigmoid(logits)): 0.5
+samples with empty predicted surface (scored 0): 11
+
+threshold  precision     recall         F1
+     0.01      4.080      3.681      3.815
+     0.02     21.022     17.517     18.547
+     0.03     40.262     33.390     35.362
+     0.04     55.669     45.851     48.764
+     0.05     67.264     55.003     58.814
+
+*** F1@0.05: 58.814 ***
+Average Precision@0.05: 67.264
+Average Recall@0.05: 55.003
+Average F1@0.05: 58.814

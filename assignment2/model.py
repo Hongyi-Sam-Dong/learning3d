@@ -20,23 +20,74 @@ class SingleViewto3D(nn.Module):
         if args.type == "vox":
             # Input: b x 512
             # Output: b x 32 x 32 x 32
-            pass
-            # TODO:
-            # self.decoder =             
+            self.decoder = nn.Sequential(
+                # Global image feature -> coarse 3D latent volume
+                nn.Linear(512, 256 * 4 * 4 * 4),
+                nn.ReLU(),
+
+                # B x (256*4*4*4) -> B x 256 x 4 x 4 x 4
+                nn.Unflatten(1, (256, 4, 4, 4)),
+
+                # 4^3 -> 8^3
+                nn.ConvTranspose3d(
+                    in_channels=256,
+                    out_channels=128,
+                    kernel_size=4,
+                    stride=2,
+                    padding=1
+                ),
+                nn.ReLU(),
+
+                # 8^3 -> 16^3
+                nn.ConvTranspose3d(
+                    in_channels=128,
+                    out_channels=64,
+                    kernel_size=4,
+                    stride=2,
+                    padding=1
+                ),
+                nn.ReLU(),
+
+                # 16^3 -> 32^3
+                nn.ConvTranspose3d(
+                    in_channels=64,
+                    out_channels=1,
+                    kernel_size=4,
+                    stride=2,
+                    padding=1
+                )
+            )    
         elif args.type == "point":
             # Input: b x 512
             # Output: b x args.n_points x 3  
             self.n_point = args.n_points
-            # TODO:
-            # self.decoder =             
+
+            self.decoder = nn.Sequential(
+                nn.Linear(512, 1024),
+                nn.ReLU(),
+
+                nn.Linear(1024, 2048),
+                nn.ReLU(),
+
+                nn.Linear(2048, args.n_points * 3)
+            )          
         elif args.type == "mesh":
             # Input: b x 512
             # Output: b x mesh_pred.verts_packed().shape[0] x 3  
             # try different mesh initializations
             mesh_pred = ico_sphere(4, self.device)
             self.mesh_pred = pytorch3d.structures.Meshes(mesh_pred.verts_list()*args.batch_size, mesh_pred.faces_list()*args.batch_size)
-            # TODO:
-            # self.decoder =             
+            n_verts = mesh_pred.verts_packed().shape[0]
+
+            self.decoder = nn.Sequential(
+                nn.Linear(512, 1024),
+                nn.ReLU(),
+
+                nn.Linear(1024, 2048),
+                nn.ReLU(),
+
+                nn.Linear(2048, n_verts * 3)
+            )          
 
     def forward(self, images, args):
         results = dict()
@@ -55,17 +106,19 @@ class SingleViewto3D(nn.Module):
         # call decoder
         if args.type == "vox":
             # TODO:
-            # voxels_pred =             
+            voxels_pred = self.decoder(encoded_feat)        
             return voxels_pred
 
         elif args.type == "point":
-            # TODO:
-            # pointclouds_pred =             
+            pointclouds_pred = self.decoder(encoded_feat)
+            pointclouds_pred = pointclouds_pred.reshape(
+                B, self.n_point, 3
+            )
             return pointclouds_pred
 
         elif args.type == "mesh":
             # TODO:
-            # deform_vertices_pred =             
+            deform_vertices_pred = self.decoder(encoded_feat)          
             mesh_pred = self.mesh_pred.offset_verts(deform_vertices_pred.reshape([-1,3]))
             return  mesh_pred          
 
