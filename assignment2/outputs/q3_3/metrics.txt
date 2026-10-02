@@ -1,5 +1,5 @@
 Q3.3 three-class voxel model, evaluated on the split_3c.json test split
-checkpoint: /workspace/learning3d/assignment2/checkpoint_q3_3_vox.pth (step 2000)
+checkpoint: /workspace/learning3d/assignment2/checkpoint_q3_3_vox.pth (step 10000)
 split file: /workspace/learning3d/assignment2/r2n2_shapenet_dataset_full/split_3c.json
 load_feat: False
 vox_threshold (on sigmoid(logits)): 0.5
@@ -7,40 +7,40 @@ n_points: 1000
 seed: 0 (input view and point samples are fixed per sample by the seed)
 samples evaluated: 1451 (full test split)
 
-== overall: 1451 samples, 132 with empty predicted surface (scored 0)
+== overall: 1451 samples, 104 with empty predicted surface (scored 0)
 threshold  precision     recall         F1
-     0.01      6.963      5.642      5.962
-     0.02     28.842     19.311     21.537
-     0.03     49.103     30.548     34.940
-     0.04     61.971     38.432     43.953
-     0.05     70.029     43.792     50.032
+     0.01      6.429      5.393      5.622
+     0.02     27.969     21.089     22.716
+     0.03     49.400     35.278     38.929
+     0.04     63.016     44.828     49.570
+     0.05     71.251     50.944     56.284
 
-== chair: 678 samples, 91 with empty predicted surface (scored 0)
+== chair: 678 samples, 58 with empty predicted surface (scored 0)
 threshold  precision     recall         F1
-     0.01      3.679      2.224      2.478
-     0.02     18.788      9.630     11.194
-     0.03     36.123     18.187     21.541
-     0.04     49.708     25.567     30.402
-     0.05     59.902     31.662     37.572
+     0.01      4.006      3.033      3.245
+     0.02     20.744     13.789     15.201
+     0.03     39.346     25.693     28.586
+     0.04     53.737     35.279     39.345
+     0.05     64.073     42.479     47.461
 
-== car: 368 samples, 40 with empty predicted surface (scored 0)
+== car: 368 samples, 39 with empty predicted surface (scored 0)
 threshold  precision     recall         F1
-     0.01      2.836      1.863      2.104
-     0.02     16.945      7.474      9.397
-     0.03     34.861     13.150     17.410
-     0.04     49.001     18.506     24.644
-     0.05     58.496     23.348     30.866
+     0.01      3.305      2.307      2.472
+     0.02     17.176     10.570     12.129
+     0.03     34.909     19.171     22.984
+     0.04     48.181     25.698     31.363
+     0.05     57.439     30.840     37.730
 
-== plane: 405 samples, 1 with empty predicted surface (scored 0)
+== plane: 405 samples, 7 with empty predicted surface (scored 0)
 threshold  precision     recall         F1
-     0.01     16.213     14.799     15.301
-     0.02     56.482     46.274     49.883
-     0.03     83.775     67.050     73.301
-     0.04     94.285     78.074     84.184
-     0.05     97.461     82.673     88.307
+     0.01     13.323     12.147     12.466
+     0.02     49.870     42.867     44.915
+     0.03     79.399     65.961     70.731
+     0.04     92.031     78.197     83.231
+     0.05     95.816     83.380     87.913
 
-*** overall F1@0.05: 50.032 ***
-*** chair F1@0.05: 37.572 ***
-*** car F1@0.05: 30.866 ***
-*** plane F1@0.05: 88.307 ***
-mean of per-class F1@0.05: 52.248
+*** overall F1@0.05: 56.284 ***
+*** chair F1@0.05: 47.461 ***
+*** car F1@0.05: 37.730 ***
+*** plane F1@0.05: 87.913 ***
+mean of per-class F1@0.05: 57.701

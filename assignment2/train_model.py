@@ -65,6 +65,18 @@ def calculate_loss(predictions, ground_truth, args):
     return loss
 
 
+def save_checkpoint(model, optimizer, step, args):
+    print(f"Saving checkpoint at step {step}")
+    torch.save(
+        {
+            "step": step,
+            "model_state_dict": model.state_dict(),
+            "optimizer_state_dict": optimizer.state_dict(),
+        },
+        f"checkpoint_{args.type}.pth",
+    )
+
+
 def train_model(args):
     r2n2_dataset = R2N2(
         "train",
@@ -99,10 +111,11 @@ def train_model(args):
         checkpoint = torch.load(f"checkpoint_{args.type}.pth")
         model.load_state_dict(checkpoint["model_state_dict"])
         optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
-        start_iter = checkpoint["step"]
+        start_iter = checkpoint["step"] + 1  # 'step' = last completed step
         print(f"Succesfully loaded iter {start_iter}")
 
     print("Starting training !")
+    step = saved_step = start_iter - 1
     for step in range(start_iter, args.max_iter):
         iter_start_time = time.time()
 
@@ -130,20 +143,17 @@ def train_model(args):
         loss_vis = loss.cpu().item()
 
         if (step % args.save_freq) == 0 and step > 0:
-            print(f"Saving checkpoint at step {step}")
-            torch.save(
-                {
-                    "step": step,
-                    "model_state_dict": model.state_dict(),
-                    "optimizer_state_dict": optimizer.state_dict(),
-                },
-                f"checkpoint_{args.type}.pth",
-            )
+            save_checkpoint(model, optimizer, step, args)
+            saved_step = step
 
         print(
             "[%4d/%4d]; ttime: %.0f (%.2f, %.2f); loss: %.3f"
             % (step, args.max_iter, total_time, read_time, iter_time, loss_vis)
         )
+
+    # Persist the last completed step; skip if no step ran or it was just saved above.
+    if step >= start_iter and step != saved_step:
+        save_checkpoint(model, optimizer, step, args)
 
     print("Done!")
 

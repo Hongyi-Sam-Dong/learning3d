@@ -1,16 +1,16 @@
-checkpoint: /workspace/learning3d/assignment2/checkpoint_q3_1.pth (step 6000)
+checkpoint: /workspace/learning3d/assignment2/checkpoint_q3_1.pth (step 10000)
 load_feat: False
 n_points: 1000
 samples evaluated: 678 (full test split)
 seed: 0
 vox_threshold (on sigmoid(logits)): 0.5
-samples with empty predicted surface (scored 0): 129
+samples with empty predicted surface (scored 0): 85
 
 threshold  precision     recall         F1
-     0.01      3.177      2.263      2.431
-     0.02     16.258     10.456     11.690
-     0.03     31.903     20.055     22.693
-     0.04     44.221     27.955     31.789
-     0.05     53.648     34.334     39.091
+     0.01      3.573      3.022      3.133
+     0.02     18.255     14.936     15.643
+     0.03     36.055     29.090     30.565
+     0.04     50.373     40.378     42.730
+     0.05     60.972     48.349     51.605
 
-*** F1@0.05: 39.091 ***
+*** F1@0.05: 51.605 ***
