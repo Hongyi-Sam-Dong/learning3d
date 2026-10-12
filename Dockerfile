@@ -68,6 +68,15 @@ assert torch.version.cuda, 'CPU-only torch'; \
 from pytorch3d import _C; \
 print('torch', torch.__version__, 'cuda', torch.version.cuda, '| pytorch3d', pytorch3d.__version__)"
 
+# Assignment 3 requirements not already installed above (hydra-core, requests,
+# plyfile, scikit-image). Its nerf/environment.yml (CUDA 11, PyTorch3D 0.6.1) is
+# legacy and deliberately ignored.
+RUN pip install -c /opt/torch-constraints.txt \
+        "numpy<2.0.0" hydra-core Pillow requests plyfile scikit-image \
+    && python -c "import torch, pytorch3d, hydra, omegaconf, plyfile, skimage, requests; \
+assert torch.version.cuda, 'CPU-only torch'; \
+print('torch', torch.__version__, '| hydra', hydra.__version__, '| skimage', skimage.__version__)"
+
 # Non-root user matching the host user so files written to the bind mount keep
 # host ownership. Owning the venv lets the user `pip install` extras if needed.
 RUN groupadd --gid ${USER_GID} ${USERNAME} \
