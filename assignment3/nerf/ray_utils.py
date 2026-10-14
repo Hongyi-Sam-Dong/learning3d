@@ -110,7 +110,8 @@ def get_random_pixels_from_image(n_pixels, image_size, camera):
     xy_grid = get_pixels_from_image(image_size, camera)
     
     # TODO (Q2.1): Random subsampling of pixel coordinaters
-    pass
+    perm = torch.randperm(xy_grid.shape[0], device=xy_grid.device)
+    xy_grid_sub = xy_grid[perm]
 
     # Return
     return xy_grid_sub.reshape(-1, 2)[:n_pixels]
@@ -140,6 +141,7 @@ def get_rays_from_pixels(xy_grid, image_size, camera):
 
     # TODO (Q1.3): Get ray directions as image_plane_points - rays_o
     rays_d = image_plane_points - rays_o
+    rays_d = torch.nn.functional.normalize(rays_d, dim=-1)
 
     # Create and return RayBundle
     return RayBundle(

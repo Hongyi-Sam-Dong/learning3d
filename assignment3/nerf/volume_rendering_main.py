@@ -19,6 +19,7 @@ from implicit import implicit_dict
 from sampler import sampler_dict
 from renderer import renderer_dict
 from losses import get_eikonal_loss
+from render_functions import render_points
 from ray_utils import (
     sample_images_at_xy,
     get_pixels_from_image,
@@ -100,18 +101,18 @@ def render_images(
 
         # TODO (Q1.3): Visualize xy grid using vis_grid
         if cam_idx == 0 and file_prefix == '':
-            pass
+            plt.imsave("images/grid.png", vis_grid(xy_grid, image_size))
 
         # TODO (Q1.3): Visualize rays using vis_rays
         if cam_idx == 0 and file_prefix == '':
-            pass
+            plt.imsave("images/rays.png", vis_rays(ray_bundle, image_size))
         
         # TODO (Q1.4): Implement point sampling along rays in sampler.py
-        pass
+        ray_bundle = model.sampler(ray_bundle)
 
         # TODO (Q1.4): Visualize sample points as point cloud
         if cam_idx == 0 and file_prefix == '':
-            pass
+            render_points("images/sample_points.png", ray_bundle.sample_points.reshape(1, -1, 3), image_size)
 
         # TODO (Q1.5): Implement rendering in renderer.py
         out = model(ray_bundle)
@@ -126,7 +127,9 @@ def render_images(
 
         # TODO (Q1.5): Visualize depth
         if cam_idx == 2 and file_prefix == '':
-            pass
+            depth = out["depth"].view(image_size[1], image_size[0])
+            depth = depth / depth.max()
+            plt.imsave("images/depth.png", depth.detach().cpu().numpy())
 
         # Save
         if save:
@@ -202,7 +205,7 @@ def train(
             out = model(ray_bundle)
 
             # TODO (Q2.2): Calculate loss
-            loss = None
+            loss = torch.nn.functional.mse_loss(out["feature"], rgb_gt)
 
             # Backprop
             optimizer.zero_grad()
