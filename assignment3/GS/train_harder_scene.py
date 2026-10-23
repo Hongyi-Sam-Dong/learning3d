@@ -97,7 +97,7 @@ def run_training(args):
     # Init gaussians and scene
     gaussians = Gaussians(
         num_points=10000, init_type="random",
-        device=args.device, isotropic=True
+        device=args.device, isotropic=not args.anisotropic
     )
     scene = Scene(gaussians)
 
@@ -252,6 +252,7 @@ def get_args():
         "--num_itrs", default=1000, type=int,
         help="Number of iterations to train the model."
     )
+    parser.add_argument("--anisotropic", action="store_true")
     parser.add_argument(
         "--viz_freq", default=20, type=int,
         help="Frequency with which visualization should be performed."

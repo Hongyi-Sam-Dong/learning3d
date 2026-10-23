@@ -10,24 +10,46 @@
             max-width: 1000px;
             margin: 40px auto;
             padding: 0 20px;
-            line-height: 1.6;
+            line-height: 1.5;
         }
 
-        h1, h2, h3 {
+        h1 {
+            margin-top: 50px;
+        }
+
+        h2 {
+            margin-top: 45px;
+        }
+
+        h3 {
             margin-top: 35px;
         }
 
         img {
-            max-width: 100%;
+            display: block;
+            width: auto;
+            max-width: 39%;
+            height: auto;
+            margin: 15px auto;
         }
 
-        .row {
+        .row,
+        .two-image-row {
             display: flex;
             gap: 20px;
+            align-items: flex-start;
         }
 
-        .row > div {
-            flex: 1;
+        .row > div,
+        .two-image-row > div {
+            width: 50%;
+        }
+
+        .row img,
+        .two-image-row img {
+            width: 50%;
+            max-width: 50%;
+            margin: 10px auto;
         }
 
         table {
@@ -42,46 +64,80 @@
             text-align: left;
         }
 
-        code {
-            background: #eee;
-            padding: 2px 4px;
+        @media (max-width: 800px) {
+            img {
+                max-width: 50%;
+            }
+
+            .row,
+            .two-image-row {
+                display: block;
+            }
+
+            .row > div,
+            .two-image-row > div {
+                width: 100%;
+            }
+
+            .row img,
+            .two-image-row img {
+                width: 50%;
+                max-width: 50%;
+            }
         }
     </style>
 </head>
 
 <body>
 
-<h1>Assignment 3: Volume Rendering, NeRF, and 3D Gaussian Splatting</h1>
+
+<h1>Assignment 3</h1>
+
+
+<h1>A. Neural Volume Rendering</h1>
+
+
+<h2>1.3 Ray Sampling</h2>
 
 <p>
-This assignment explores differentiable volume rendering, Neural Radiance Fields,
-VolSDF, and 3D Gaussian Splatting.
-</p>
-
-
-<h1>Part A: Neural Volume Rendering</h1>
-
-
-<h2>1. Differentiable Volume Rendering</h2>
-
-<p>
-I implemented ray generation, point sampling, and emission-absorption volume rendering.
-For each ray, the rendering weights are
-</p>
-
-<p>
-α<sub>i</sub> = 1 - exp(-σ<sub>i</sub> Δt<sub>i</sub>)
-</p>
-
-<p>
-T<sub>i</sub> = ∏<sub>j&lt;i</sub>(1 - α<sub>j</sub>)
-</p>
-
-<p>
-w<sub>i</sub> = T<sub>i</sub> α<sub>i</sub>
+I generated image-space pixel coordinates in NDC and unprojected them through
+the camera to obtain world-space rays. Each ray starts at the camera center and
+uses a normalized direction toward the corresponding image-plane point.
 </p>
 
 <div class="row">
+    <div>
+        <img src="nerf/images/grid.png">
+        <p><b>vis_grid</b></p>
+    </div>
+
+    <div>
+        <img src="nerf/images/rays.png">
+        <p><b>vis_rays</b></p>
+    </div>
+</div>
+
+
+<h2>1.4 Point Sampling</h2>
+
+<p>
+For each ray, I uniformly sampled 64 points between the configured near and far
+depths. Each 3D sample is computed as the ray origin plus the sampled depth
+multiplied by the ray direction.
+</p>
+
+<img src="nerf/images/sample_points.png">
+
+
+<h2>1.5 Volume Rendering</h2>
+
+<p>
+I implemented emission-absorption volume rendering. Density is converted to alpha,
+and each sample is weighted by its alpha and the accumulated transmittance from
+all previous samples. The same rendering weights are used for both RGB and depth.
+</p>
+
+<div class="two-image-row">
     <div>
         <h3>RGB Rendering</h3>
         <img src="nerf/images/part_1.gif">
@@ -94,211 +150,258 @@ w<sub>i</sub> = T<sub>i</sub> α<sub>i</sub>
 </div>
 
 
-<h2>2. Optimizing a Basic Implicit Volume</h2>
+<h2>2.2 Loss and Training</h2>
 
 <p>
-I optimized the center and side lengths of an analytic box using RGB supervision.
-The model was trained for 1000 epochs using Adam with learning rate 5e-4,
-4096 randomly sampled rays per iteration, and MSE loss.
+I optimized the center and side lengths of the box using RGB supervision.
+I used mean squared error between predicted and ground-truth RGB values and
+optimized the box parameters using Adam for 1000 epochs.
 </p>
+
+<p>
+<b>Optimized Box Center:</b> (0.25, 0.25, 0.00)
+</p>
+
+<p>
+<b>Optimized Box Side Lengths:</b> (2.01, 1.50, 1.50)
+</p>
+
+
+<h2>2.3 Visualization</h2>
 
 <img src="nerf/images/part_2.gif">
 
+
+<h2>3. Optimizing a Neural Radiance Field (NeRF)</h2>
+
+<h3>Architecture</h3>
+
 <p>
-<b>Optimized box center:</b> TODO
+I implemented a NeRF MLP that maps a 3D position to density and color.
+The 3D position is first encoded using positional encoding with 6 frequencies,
+which expands the 3D input to a 39-dimensional feature.
+The main MLP contains 6 layers with hidden dimension 128 and a skip connection
+at layer 3.
 </p>
 
 <p>
-<b>Optimized side lengths:</b> TODO
+The density head uses a ReLU activation so the predicted density is non-negative.
+The color head uses a Sigmoid activation to constrain RGB values to [0, 1].
+View direction is not used in Part 3, so both density and color depend only on
+3D position.
 </p>
-
-
-<h2>3. Neural Radiance Field</h2>
 
 <p>
-I replaced the analytic volume with a NeRF MLP. The model uses 6-frequency
-positional encoding for 3D coordinates, producing a 39-dimensional encoding.
-The network has 6 layers with hidden dimension 128 and a skip connection at layer 3.
-Density uses ReLU and RGB uses Sigmoid.
+I trained the model for 250 epochs using 128 samples per ray on 128 x 128 images.
+The loss is mean squared error between the rendered image and the ground-truth RGB
+image.
 </p>
-
-<table>
-    <tr>
-        <th>Setting</th>
-        <th>Value</th>
-    </tr>
-    <tr>
-        <td>Epochs</td>
-        <td>250</td>
-    </tr>
-    <tr>
-        <td>Learning rate</td>
-        <td>5e-4</td>
-    </tr>
-    <tr>
-        <td>Image resolution</td>
-        <td>128 x 128</td>
-    </tr>
-    <tr>
-        <td>Samples per ray</td>
-        <td>128</td>
-    </tr>
-    <tr>
-        <td>Ray batch size</td>
-        <td>1024</td>
-    </tr>
-</table>
 
 <img src="nerf/images/part_3_lego.gif">
 
 
 <h2>4.1 View Dependence</h2>
 
+<h3>Method</h3>
+
 <p>
-I added viewing direction to the color branch of NeRF while keeping density
-view-independent. The ray direction is encoded using 2 harmonic frequencies
-and concatenated with the learned geometry feature before predicting color.
+I extended the Part 3 NeRF by conditioning only the color prediction on viewing
+direction. The normalized ray direction is encoded using 2 positional-encoding
+frequencies and concatenated with the intermediate feature before the final color
+layers. The density branch remains view-independent because geometry should not
+change with viewing direction.
 </p>
 
-<div class="row">
-    <div>
-        <h3>Without View Dependence</h3>
-        <img src="nerf/images/part_4_1_materials_baseline.gif">
-    </div>
+<h3>Without View Dependence</h3>
 
-    <div>
-        <h3>With View Dependence</h3>
-        <img src="nerf/images/part_4_1_materials_viewdir.gif">
-    </div>
-</div>
+<img src="nerf/images/part_4_1_materials_baseline.gif">
+
+<h3>With View Dependence</h3>
+
+<img src="nerf/images/part_4_1_materials_viewdir.gif">
 
 <p>
-The difference is relatively subtle at 128 x 128 resolution. The view-dependent
-model produces smoother and more localized highlights on reflective objects.
-However, stronger view dependence can also make the model overfit to the training
-views, since color can vary independently with direction.
+<b>What is the trade-off between increased view dependence and generalization quality?</b>
+</p>
+
+<p>
+Adding viewing direction allows the model to represent effects such as reflections
+and specular highlights whose appearance changes with camera direction. In the
+materials scene, the view-dependent model produces slightly smoother and more
+localized highlights, especially on reflective surfaces.
+</p>
+
+<p>
+However, stronger view dependence also gives the network more freedom to explain
+individual training images using view-specific appearance. If this dependence is
+too strong, the model may overfit the training views instead of learning appearance
+that generalizes well to novel viewpoints. I therefore keep density
+view-independent and use only a relatively low-frequency direction encoding in the
+color branch.
 </p>
 
 
 <h2>4.2 Coarse/Fine Sampling</h2>
 
+<h3>Method</h3>
+
 <p>
-I implemented hierarchical sampling using a coarse and fine NeRF.
-The coarse network evaluates 64 uniform samples. Its rendering weights define
-a PDF used to draw 64 additional importance samples. The coarse and fine samples
-are merged and sorted, producing 128 samples for the fine network.
+I implemented hierarchical sampling using separate coarse and fine NeRF networks.
+The coarse pass uniformly samples 64 points along each ray and uses their rendering
+weights to estimate where important geometry is located.
 </p>
 
-<div class="row">
-    <div>
-        <h3>Uniform Sampling</h3>
-        <img src="nerf/images/part_4_1_materials_viewdir.gif">
-    </div>
+<p>
+I then draw 64 additional importance samples from this distribution. The original
+coarse samples and the new importance samples are merged and sorted, giving 128
+samples that are evaluated by the fine network.
+</p>
 
-    <div>
-        <h3>Hierarchical Sampling</h3>
-        <img src="nerf/images/part_4_2_materials_hierarchical.gif">
-    </div>
-</div>
+<h3>Uniform Sampling</h3>
+
+<img src="nerf/images/part_4_1_materials_viewdir.gif">
+
+<h3>Coarse/Fine Sampling</h3>
+
+<img src="nerf/images/part_4_2_materials_hierarchical.gif">
 
 <p>
-Hierarchical sampling places more samples around regions with high rendering
-weight instead of wasting samples in empty space. The visual improvement is
-small at this resolution, while computation increases because both the coarse
-and fine networks must be evaluated.
+<b>What is the speed and quality trade-off of coarse/fine sampling?</b>
+</p>
+
+<p>
+Hierarchical sampling concentrates additional samples near regions with high
+rendering weight, which usually correspond to scene surfaces. This reduces the
+number of samples wasted in empty space and allows more sampling resolution to be
+placed near important geometry.
+</p>
+
+<p>
+The trade-off is additional computation. The uniform baseline evaluates 128
+samples per ray with one network. The hierarchical method evaluates 64 samples
+using the coarse network and then 128 samples using the fine network, for 192
+network evaluations per ray. In my results, the improvement is visible but fairly
+subtle at 128 x 128 resolution, while the hierarchical approach requires more
+computation.
 </p>
 
 
 <h2>4.3 VolSDF</h2>
 
-<p>
-I implemented a neural signed distance field and converted SDF values into
-density using the VolSDF formulation.
-</p>
-
-<div class="row">
-    <div>
-        <h3>RGB</h3>
-        <img src="nerf/images/part_4_3.gif">
-    </div>
-
-    <div>
-        <h3>Geometry</h3>
-        <img src="nerf/images/part_4_3_geometry.gif">
-    </div>
-</div>
-
-<table>
-    <tr>
-        <th>Parameter</th>
-        <th>Value</th>
-    </tr>
-    <tr>
-        <td>Alpha</td>
-        <td>10.0</td>
-    </tr>
-    <tr>
-        <td>Beta</td>
-        <td>0.05</td>
-    </tr>
-    <tr>
-        <td>Eikonal weight</td>
-        <td>0.02</td>
-    </tr>
-    <tr>
-        <td>Epochs</td>
-        <td>250</td>
-    </tr>
-</table>
+<h3>Method and Settings</h3>
 
 <p>
-Alpha controls the density scale inside the object, while beta controls the
-width of the transition around the zero level set.
+I implemented a neural signed distance field using a 6-layer MLP with hidden
+dimension 128. Instead of directly predicting volume density, the network predicts
+a signed distance value. The signed distance is then converted into density for
+volume rendering.
 </p>
 
 <p>
-A higher beta creates a smoother and wider density transition, making optimization
-easier because gradients exist farther from the surface. However, this can produce
-less accurate geometry.
+I used alpha = 10, beta = 0.05, and an Eikonal loss weight of 0.02.
+The Eikonal loss encourages the gradient magnitude of the learned SDF to remain
+close to 1, which encourages the network to behave like a valid signed distance
+function.
+</p>
+
+<h3>RGB Rendering</h3>
+
+<img src="nerf/images/part_4_3.gif">
+
+<h3>Geometry</h3>
+
+<img src="nerf/images/part_4_3_geometry.gif">
+
+
+<p>
+<b>What do alpha and beta control?</b>
 </p>
 
 <p>
-A lower beta produces a sharper transition and can recover a more accurate surface,
-but optimization becomes harder because the useful gradient region is smaller.
+Alpha controls the overall density scale inside the object. Beta controls the width
+of the transition between low density outside the surface and high density inside
+the surface. I used alpha = 10 and beta = 0.05.
+</p>
+
+
+<p>
+<b>How does high beta bias the learned SDF? What about low beta?</b>
 </p>
 
 <p>
-The recovered bulldozer geometry captures the major structure, but there are also
-spurious surfaces in weakly supervised empty regions.
+A high beta produces a wider and smoother density transition around the zero level
+set. A relatively thick region around the surface therefore contributes to
+rendering, which can bias the learned geometry toward a smoother and less precisely
+localized surface.
 </p>
-
-
-<h1>Part B: 3D Gaussian Splatting</h1>
-
-
-<h2>5. 3D Gaussian Rasterization</h2>
 
 <p>
-I implemented a simplified 3D Gaussian rasterizer. The main steps are:
+A low beta produces a much sharper transition concentrated near the SDF zero
+crossing. This more tightly connects the rendered appearance to the location of
+the zero level set and can therefore produce more accurately localized geometry.
 </p>
 
-<ol>
-    <li>Compute the 3D Gaussian covariance.</li>
-    <li>Project the covariance and mean into image space.</li>
-    <li>Evaluate each 2D Gaussian at image pixels.</li>
-    <li>Filter Gaussians behind the camera and sort by depth.</li>
-    <li>Compute alpha and transmittance.</li>
-    <li>Accumulate RGB, depth, and silhouette.</li>
-</ol>
+
+<p>
+<b>Would an SDF be easier to train with low beta or high beta? Why?</b>
+</p>
+
+<p>
+An SDF is generally easier to train with a higher beta because the density
+transition covers a wider region. Samples farther from the current surface can
+still receive useful gradients, making early optimization smoother. With a very
+low beta, useful gradients are concentrated in a narrow region near the surface,
+which may be missed by the sampled points along a ray.
+</p>
+
+
+<p>
+<b>Would an accurate surface be more likely with high beta or low beta? Why?</b>
+</p>
+
+<p>
+A lower beta is more likely to produce an accurate surface, provided that the ray
+sampling resolution is fine enough to resolve the sharp transition. The rendered
+opacity becomes concentrated close to the SDF zero crossing, so matching the input
+images more directly constrains the actual location of the surface.
+</p>
+
+
+<p>
+<b>What settings did I choose and why?</b>
+</p>
+
+<p>
+I used alpha = 10, beta = 0.05, and an Eikonal weight of 0.02. Beta = 0.05 gives
+a relatively sharp surface while still providing a sufficiently wide transition
+region for useful gradients during training. The recovered model captures the
+major bulldozer geometry, including the body, arm, and bucket, although some
+spurious surfaces remain in weakly constrained regions around the object.
+</p>
+
+
+<h1>B. 3D Gaussian Splatting</h1>
+
+
+<h2>5.5 Perform Splatting</h2>
+
+<p>
+I implemented the Gaussian splatting pipeline by projecting each 3D Gaussian into
+a 2D Gaussian, sorting visible Gaussians from front to back, computing per-pixel
+alpha and transmittance, and compositing color, depth, and silhouette using
+alpha-weighted blending.
+</p>
 
 <img src="GS/output/part_5_render.gif">
 
 
-<h2>6. Training 3D Gaussian Representations</h2>
+<h2>6.1 Setting Up Parameters and Optimizer</h2>
 
 <p>
-I trained 10,000 isotropic Gaussians initialized using the provided truck point cloud.
-The loss is L1 and Adam is used with separate learning rates for each parameter group.
+I trained 10,000 isotropic Gaussians initialized from the provided truck point
+cloud. Because the Gaussians are isotropic, quaternion rotations do not affect
+their shape and are kept fixed. I use separate learning rates for the different
+Gaussian parameters.
 </p>
 
 <table>
@@ -306,26 +409,38 @@ The loss is L1 and Adam is used with separate learning rates for each parameter 
         <th>Parameter</th>
         <th>Learning Rate</th>
     </tr>
+
     <tr>
         <td>Means</td>
         <td>0.001</td>
     </tr>
+
     <tr>
         <td>Scales</td>
         <td>0.005</td>
     </tr>
+
     <tr>
         <td>Opacities</td>
         <td>0.01</td>
     </tr>
+
     <tr>
         <td>Colors</td>
         <td>0.01</td>
     </tr>
 </table>
 
+
+<h2>6.2 Perform Forward Pass and Compute Loss</h2>
+
 <p>
-<b>Iterations:</b> 1000
+I used L1 loss between the rendered RGB image and the ground-truth image and
+optimized the Gaussian parameters using Adam for 1000 iterations.
+</p>
+
+<p>
+<b>Number of Iterations:</b> 1000
 </p>
 
 <p>
@@ -336,107 +451,130 @@ The loss is L1 and Adam is used with separate learning rates for each parameter 
 <b>Mean SSIM:</b> 0.942
 </p>
 
-<div class="row">
-    <div>
-        <h3>Training Progress</h3>
-        <img src="GS/output/part_6_training_progress.gif">
-    </div>
+<h3>Training Progress</h3>
 
-    <div>
-        <h3>Final Renders</h3>
-        <img src="GS/output/part_6_training_final_renders.gif">
-    </div>
-</div>
+<img src="GS/output/part_6_training_progress.gif">
+
+<h3>Final Renders</h3>
+
+<img src="GS/output/part_6_training_final_renders.gif">
 
 <p>
-Because the Gaussians are initialized directly from a clean point cloud,
-the scene geometry is already approximately correct at the start of training.
-The optimizer mainly needs to refine colors, scales, opacities, and positions.
+The point-cloud initialization provides a strong estimate of the scene geometry
+before optimization begins. As training progresses, the initially noisy Gaussian
+colors and parameters are refined until the truck geometry, wheels, windows, and
+appearance become clearly reconstructed.
 </p>
 
 
-<h2>7.1 Spherical Harmonics</h2>
+<h2>7.1 Rendering Using Spherical Harmonics</h2>
+
+<h3>Method</h3>
 
 <p>
-Part 5 uses only the degree-0 spherical harmonic coefficient, giving each Gaussian
-a fixed view-independent color. In this extension I use degree-3 spherical harmonics,
-with 16 basis functions and 48 RGB coefficients per Gaussian.
+Part 5 uses only the degree-0 spherical harmonic component, which gives each
+Gaussian a fixed view-independent color. For Part 7.1, I evaluate degree-3
+spherical harmonics using the direction from the camera center to each Gaussian.
+Degree 3 provides 16 spherical harmonic basis functions, corresponding to 48
+coefficients for RGB for each Gaussian.
 </p>
 
-<div class="row">
-    <div>
-        <h3>DC Only</h3>
-        <img src="GS/output/part_5_render.gif">
-    </div>
+<h3>Without Spherical Harmonics</h3>
 
-    <div>
-        <h3>Spherical Harmonics</h3>
-        <img src="GS/output/part_7_1_render.gif">
-    </div>
-</div>
+<img src="GS/output/part_5_render.gif">
+
+<h3>With Spherical Harmonics</h3>
+
+<img src="GS/output/part_7_1_render.gif">
 
 
 <h3>Comparison 1</h3>
 
-<div class="row">
+<div class="two-image-row">
     <div>
+        <p><b>Without SH</b></p>
         <img src="GS/output/part_5_render/000.png">
     </div>
 
     <div>
+        <p><b>With SH</b></p>
         <img src="GS/output/part_7_1_render/000.png">
     </div>
 </div>
 
 <p>
-In the SH rendering, the green upholstery is darker and more saturated and the
-gold pattern has stronger contrast. The DC-only result appears flatter.
+<b>What differences are visible in this view?</b>
+</p>
+
+<p>
+The spherical harmonic rendering produces darker and more saturated green
+upholstery, while the gold pattern has stronger contrast. The DC-only result
+appears flatter and more washed out.
 </p>
 
 
 <h3>Comparison 2</h3>
 
-<div class="row">
+<div class="two-image-row">
     <div>
+        <p><b>Without SH</b></p>
         <img src="GS/output/part_5_render/007.png">
     </div>
 
     <div>
+        <p><b>With SH</b></p>
         <img src="GS/output/part_7_1_render/007.png">
     </div>
 </div>
 
 <p>
-At this oblique viewing angle, the SH result produces a stronger highlight along
-the edge of the backrest. This is a view-dependent effect that cannot be represented
-using one fixed color per Gaussian.
+<b>What differences are visible in this view?</b>
+</p>
+
+<p>
+At this oblique view, the spherical harmonic result produces a stronger
+yellow-green highlight along the backrest edge and a darker center. This is a
+view-dependent appearance effect that cannot be represented using a single fixed
+color per Gaussian.
 </p>
 
 
 <h3>Comparison 3</h3>
 
-<div class="row">
+<div class="two-image-row">
     <div>
+        <p><b>Without SH</b></p>
         <img src="GS/output/part_5_render/021.png">
     </div>
 
     <div>
+        <p><b>With SH</b></p>
         <img src="GS/output/part_7_1_render/021.png">
     </div>
 </div>
 
 <p>
-The wooden underside is almost identical between the two methods. This shows that
-mostly diffuse regions can already be represented well using only the degree-0 term.
+<b>What differences are visible in this view?</b>
+</p>
+
+<p>
+The wooden underside is almost unchanged between the two methods. The main
+difference remains in the visible green fabric. This shows that mostly diffuse
+surfaces can already be represented well using only the degree-0 spherical
+harmonic component.
 </p>
 
 
 <h2>7.2 Training on a Harder Scene</h2>
 
+
+<h3>Baseline</h3>
+
 <p>
-For the harder materials scene, I initialized 10,000 Gaussian means randomly near
-the origin instead of using a clean point cloud. The baseline uses the same optimizer,
-learning rates, L1 loss, and isotropic Gaussian representation as Part 6.
+For the baseline, I reused the Part 6 training setup but initialized 10,000
+Gaussian means randomly rather than using a high-quality point cloud. The
+Gaussians remain isotropic, and I keep the same L1 loss and learning rates used
+in Part 6.
 </p>
 
 <table>
@@ -444,56 +582,168 @@ learning rates, L1 loss, and isotropic Gaussian representation as Part 6.
         <th>Setting</th>
         <th>Baseline</th>
     </tr>
+
     <tr>
         <td>Initialization</td>
-        <td>10,000 random Gaussians</td>
+        <td>10,000 Random Gaussians</td>
     </tr>
+
     <tr>
-        <td>Gaussian type</td>
+        <td>Gaussian Type</td>
         <td>Isotropic</td>
     </tr>
+
     <tr>
         <td>Iterations</td>
         <td>1000</td>
     </tr>
+
     <tr>
         <td>Loss</td>
         <td>L1</td>
     </tr>
+
     <tr>
         <td>Mean PSNR</td>
         <td>18.122</td>
     </tr>
+
     <tr>
         <td>Mean SSIM</td>
         <td>0.677</td>
     </tr>
 </table>
 
-<div class="row">
-    <div>
-        <h3>Baseline Training Progress</h3>
-        <img src="GS/output/part_7_2_training_progress.gif">
-    </div>
 
-    <div>
-        <h3>Baseline Final Renders</h3>
-        <img src="GS/output/part_7_2_training_final_renders.gif">
-    </div>
-</div>
+<h3>Baseline Training Progress</h3>
+
+<img src="GS/output/part_7_2_baseline_training_progress.gif">
+
+<h3>Baseline Final Renders</h3>
+
+<img src="GS/output/part_7_2_baseline_training_final_renders.gif">
+
+
+<h3>Improved Method: Anisotropic Gaussians</h3>
 
 <p>
-The baseline is significantly harder to optimize than Part 6 because the Gaussians
-must first discover the scene geometry from random initialization. After 1000 iterations,
-the major object locations begin to appear, but the reconstruction remains blurry and
-contains missing or smeared regions.
+For the improved method, I replaced the isotropic Gaussians with anisotropic
+Gaussians while keeping the random initialization, number of Gaussians, loss,
+number of iterations, and the main learning rates unchanged.
+</p>
+
+<p>
+An isotropic Gaussian has the same scale in every direction, which limits the
+shapes it can represent. An anisotropic Gaussian learns independent scales along
+three axes together with a quaternion rotation. This allows individual Gaussians
+to stretch and rotate to better align with surfaces and thin structures in the
+more complex scene.
+</p>
+
+<table>
+    <tr>
+        <th>Setting</th>
+        <th>Improved Method</th>
+    </tr>
+
+    <tr>
+        <td>Initialization</td>
+        <td>10,000 Random Gaussians</td>
+    </tr>
+
+    <tr>
+        <td>Gaussian Type</td>
+        <td>Anisotropic</td>
+    </tr>
+
+    <tr>
+        <td>Iterations</td>
+        <td>1000</td>
+    </tr>
+
+    <tr>
+        <td>Loss</td>
+        <td>L1</td>
+    </tr>
+
+    <tr>
+        <td>Quaternion Learning Rate</td>
+        <td>0.001</td>
+    </tr>
+
+    <tr>
+        <td>Mean PSNR</td>
+        <td>19.068</td>
+    </tr>
+
+    <tr>
+        <td>Mean SSIM</td>
+        <td>0.680</td>
+    </tr>
+</table>
+
+
+<h3>Anisotropic Training Progress</h3>
+
+<img src="GS/output/part_7_2_anisotropic_training_progress.gif">
+
+
+<h3>Anisotropic Final Renders</h3>
+
+<img src="GS/output/part_7_2_anisotropic_training_final_renders.gif">
+
+
+<h3>Baseline vs. Improved Method</h3>
+
+<table>
+    <tr>
+        <th>Method</th>
+        <th>Gaussian Type</th>
+        <th>PSNR</th>
+        <th>SSIM</th>
+    </tr>
+
+    <tr>
+        <td>Baseline</td>
+        <td>Isotropic</td>
+        <td>18.122</td>
+        <td>0.677</td>
+    </tr>
+
+    <tr>
+        <td>Improved</td>
+        <td>Anisotropic</td>
+        <td>19.068</td>
+        <td>0.680</td>
+    </tr>
+</table>
+
+<p>
+<b>How does the improved method compare with the baseline?</b>
+</p>
+
+<p>
+The anisotropic model improves the mean PSNR from 18.122 to 19.068, an increase
+of 0.946 dB, while the mean SSIM improves from 0.677 to 0.680. The PSNR increase
+indicates that allowing the Gaussians to change shape and orientation provides a
+better fit to the more complex scene. The smaller SSIM improvement suggests that
+the overall structural similarity is only modestly improved.
 </p>
 
 
-<h3>Improved Method</h3>
+<p>
+<b>What modifications were made compared with the Part 6 training approach?</b>
+</p>
 
 <p>
-TODO: Add improved Q7.2 method, modifications, PSNR, SSIM, and training progress GIF.
+Part 6 benefits from Gaussian means initialized using a high-quality point cloud.
+For this harder scene, the Gaussian means are instead initialized randomly as
+required by the assignment. The baseline keeps isotropic Gaussians. My improved
+method changes the representation to anisotropic Gaussians, allowing each Gaussian
+to learn three independent scales and a quaternion rotation. The number of
+Gaussians, L1 loss, number of training iterations, and the learning rates for
+means, scales, opacities, and colors are otherwise kept consistent with the
+baseline so that the effect of anisotropic representation can be compared directly.
 </p>
 
 
