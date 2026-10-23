@@ -19,7 +19,10 @@ def create_renders(args):
     azims = np.linspace(-180, 180, num_views)
     elevs = np.linspace(-180, 180, num_views)
 
-    debug_root = os.path.join(args.out_path, "part_5_render")
+    # [Q 7.1] Spherical harmonics renders are saved separately from the Q5 renders
+    out_name = "part_7_1_render" if args.use_sh else "part_5_render"
+
+    debug_root = os.path.join(args.out_path, out_name)
     if not os.path.exists(debug_root):
         os.makedirs(debug_root, exist_ok=True)
 
@@ -54,7 +57,7 @@ def create_renders(args):
             # HINT: Set bg_colour to (1.0, 1.0, 1.0)
             # HINT: Get per_splat from args.gaussians_per_splat
             # HINT: img_size and camera are available above
-            img, depth, mask = None
+            img, depth, mask = scene.render(camera=camera, img_size=img_size, bg_colour=(1.0, 1.0, 1.0), per_splat=args.gaussians_per_splat, use_sh=args.use_sh)
 
         debug_path = os.path.join(debug_root, f"{i:03d}.png")
         img = img.detach().cpu().numpy()
@@ -74,7 +77,7 @@ def create_renders(args):
 
         imgs.append(np.array(resized))
 
-    gif_path = os.path.join(args.out_path, "part_5_render.gif")
+    gif_path = os.path.join(args.out_path, f"{out_name}.gif")
     imageio.mimwrite(gif_path, imgs, duration=1000.0*(1/10.0), loop=0)
 
 def get_args():
@@ -105,6 +108,13 @@ def get_args():
             "lesser number of gaussians). In general, the algorithm can run faster "
             "if more gaussians are splat per function call, but at the cost of higher GPU "
             "memory consumption."
+        )
+    )
+    parser.add_argument(
+        "--use_sh", action="store_true",
+        help=(
+            "[Q 7.1] Render view dependent colours using spherical harmonics. "
+            "By default (Q 5), only the fixed DC colours are used."
         )
     )
     parser.add_argument("--device", default="cuda", type=str, choices=["cuda", "cpu"])

@@ -61,8 +61,25 @@ class Model(torch.nn.Module):
             cfg.sampler
         )
 
+        # Q4.2: coarse/fine hierarchical sampling. self.implicit_fn / self.sampler
+        # act as the coarse network / uniform sampler; a separate fine network
+        # (own parameters) evaluates the merged coarse + importance samples.
+        self.use_hierarchical_sampling = cfg.sampler.get('use_hierarchical_sampling', False)
+        renderer_type = cfg.renderer.type
+
+        if self.use_hierarchical_sampling:
+            assert cfg.renderer.type == 'volume', 'Hierarchical sampling requires the volume renderer'
+            renderer_type = 'volume_hierarchical'
+
+            self.fine_implicit_fn = implicit_dict[cfg.implicit_function.type](
+                cfg.implicit_function
+            )
+            self.fine_sampler = sampler_dict['importance'](
+                cfg.sampler
+            )
+
         # Initialize volume renderer
-        self.renderer = renderer_dict[cfg.renderer.type](
+        self.renderer = renderer_dict[renderer_type](
             cfg.renderer
         )
     
@@ -73,6 +90,15 @@ class Model(torch.nn.Module):
         # Call renderer with
         #  a) Implicit volume
         #  b) Sampling routine
+
+        if self.use_hierarchical_sampling:
+            return self.renderer(
+                self.sampler,
+                self.implicit_fn,
+                ray_bundle,
+                fine_sampler=self.fine_sampler,
+                fine_implicit_fn=self.fine_implicit_fn,
+            )
 
         return self.renderer(
             self.sampler,
@@ -278,7 +304,7 @@ def create_model(cfg):
         )
 
     lr_scheduler = torch.optim.lr_scheduler.LambdaLR(
-        optimizer, lr_lambda, last_epoch=start_epoch - 1, verbose=False
+        optimizer, lr_lambda, last_epoch=start_epoch - 1
     )
 
     return model, optimizer, lr_scheduler, start_epoch, checkpoint_path
@@ -325,7 +351,11 @@ def train_nerf(
             out = model(ray_bundle)
 
             # TODO (Q3.1): Calculate loss
-            loss = None
+            loss = torch.nn.functional.mse_loss(out["feature"], rgb_gt)
+
+            # Q4.2: 'feature' is the fine output; also supervise the coarse network
+            if "coarse_feature" in out:
+                loss = loss + torch.nn.functional.mse_loss(out["coarse_feature"], rgb_gt)
 
             if cfg.renderer.type == 'volume_sdf':
                 loss += cfg.training.eikonal_weight * get_eikonal_loss(
@@ -374,6 +404,7 @@ def train_nerf(
                     file_prefix='volsdf' if cfg.renderer.type == 'volume_sdf' else 'nerf',
                 )
                 output_path = 'images/part_4_3.gif' if cfg.renderer.type == 'volume_sdf' else 'images/part_3.gif'
+                output_path = cfg.training.get('render_gif_path', output_path)
                 imageio.mimsave(output_path, [np.uint8(im * 255) for im in test_images], loop=0)
 
                 if cfg.renderer.type == 'volume_sdf':

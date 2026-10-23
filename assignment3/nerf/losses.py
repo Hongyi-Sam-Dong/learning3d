@@ -3,7 +3,8 @@ import torch.nn.functional as F
 
 def eikonal_loss(gradients):
     # TODO (Q4.3): Implement eikonal loss
-    pass
+    # gradients: (N, 3) = grad_x f(x); penalize deviation of the gradient *norm* from 1
+    return torch.square(torch.linalg.norm(gradients, dim=-1) - 1.0).mean()
 
 def get_eikonal_loss(implicit_fn, batch_size, bounds, device):
     points = get_random_points(batch_size, bounds, device)

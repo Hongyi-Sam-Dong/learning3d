@@ -1,3 +1,4 @@
 assignment2/r2n2_shapenet_dataset_full.zip
 assignment3/GS/data/materials/
-assignment3/nerf/data/materials.*
+assignment3/nerf/data/
+assignment3/nerf/volsdf_checkpoint

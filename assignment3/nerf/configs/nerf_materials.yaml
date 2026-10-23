@@ -10,7 +10,7 @@ training:
   lr_scheduler_step_size: 50
   lr_scheduler_gamma: 0.8
 
-  checkpoint_path: ./checkpoints
+  checkpoint_path: ./checkpoints_materials_viewdir.pth
   checkpoint_interval: 50
   resume: True
 
@@ -31,6 +31,7 @@ sampler:
 
   min_depth: 1.0
   max_depth: 7.0
+  use_hierarchical_sampling: false
 
 implicit_function:
   type: nerf
@@ -42,4 +43,5 @@ implicit_function:
   density_noise_std: 0.0
   n_layers_xyz: 6
   append_xyz: [3]
+  use_view_dependence: true
 
