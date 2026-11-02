@@ -77,6 +77,18 @@ RUN pip install -c /opt/torch-constraints.txt \
 assert torch.version.cuda, 'CPU-only torch'; \
 print('torch', torch.__version__, '| hydra', hydra.__version__, '| skimage', skimage.__version__)"
 
+# Assignment 4 requirements not already installed above (opencv-python-headless,
+# plotly). numpy<2 keeps the pytorch3d build and pins opencv to a numpy-1 wheel.
+# The .pth stands in for `pip install -e . --no-deps`: the source is bind-mounted,
+# so an editable install made inside a --rm container would not survive exit.
+RUN pip install -c /opt/torch-constraints.txt \
+        "numpy<2.0.0" "opencv-python-headless>=4.9,<6" "plotly>=6,<7" \
+    && echo /workspace/learning3d/assignment4_f26 \
+        > $VIRTUAL_ENV/lib/python3.10/site-packages/assignment4_f26.pth \
+    && python -c "import torch, pytorch3d, cv2, plotly, numpy; \
+assert torch.version.cuda, 'CPU-only torch'; \
+print('torch', torch.__version__, '| cv2', cv2.__version__, '| plotly', plotly.__version__, '| numpy', numpy.__version__)"
+
 # Non-root user matching the host user so files written to the bind mount keep
 # host ownership. Owning the venv lets the user `pip install` extras if needed.
 RUN groupadd --gid ${USER_GID} ${USERNAME} \
