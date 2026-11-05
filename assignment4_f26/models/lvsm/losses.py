@@ -20,12 +20,21 @@ def view_synthesis_loss(pred_rgb, target_rgb):
         depth validity does not mask RGB.
     """
     # TODO (Q2.0): Mean squared error over every element of both tensors.
-    loss = None  # Scalar ().
-    raise NotImplementedError("Q2.0: view_synthesis_loss")
+    loss = F.mse_loss(pred_rgb, target_rgb)
     return loss
 
 
-def compute_loss(predictions, targets):
+def view_synthesis_l1_loss(pred_rgb, target_rgb):
+    return F.l1_loss(pred_rgb, target_rgb)
+
+
+def compute_loss_terms(predictions, targets, l1_weight=0.0):
+    mse = view_synthesis_loss(predictions["rgb"], targets["rgb"])
+    l1 = view_synthesis_l1_loss(predictions["rgb"], targets["rgb"])
+    return {"loss": mse + l1_weight * l1, "mse": mse, "l1": l1}
+
+
+def compute_loss(predictions, targets, l1_weight=0.0):
     """Provided: return a scalar target-image reconstruction loss.
 
     Args:
@@ -36,4 +45,4 @@ def compute_loss(predictions, targets):
     Returns:
         loss: Scalar tensor suitable for loss.backward().
     """
-    return view_synthesis_loss(predictions["rgb"], targets["rgb"])
+    return compute_loss_terms(predictions, targets, l1_weight)["loss"]

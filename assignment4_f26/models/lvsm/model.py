@@ -108,13 +108,13 @@ def patchify(images, patch_size):
     gh, gw = h // p, w // p
     # TODO (Q2.0): Flatten all leading dims into one and split H and W into
     # (gh, p) and (gw, p) blocks, giving (L, C, gh, p, gw, p).
-    x = None
+    x = images.reshape(-1, c, gh, p, gw, p)
     # TODO (Q2.0): Reorder to (L, gh, gw, p, p, C): row-major patches, each
     # flattened in (row, col, channel) order.
-    x = None
+    x = x.permute(0, 2, 4, 3, 5, 1)
     # TODO (Q2.0): Merge the grid and each patch's contents, restoring the
     # leading dims: (*lead, gh*gw, p*p*C).
-    raise NotImplementedError("Q2.0: patchify")
+    return x.reshape(*lead, gh * gw, p * p * c)
 
 
 def unpatchify(patches, patch_size, image_hw):
@@ -137,11 +137,11 @@ def unpatchify(patches, patch_size, image_hw):
     c = dim // (p * p)
     # TODO (Q2.0): Flatten leading dims and unflatten each patch to
     # (L, gh, gw, p, p, C).
-    x = None
+    x = patches.reshape(-1, gh, gw, p, p, c)
     # TODO (Q2.0): Reorder to (L, C, gh, p, gw, p).
-    x = None
+    x = x.permute(0, 5, 1, 3, 2, 4)
     # TODO (Q2.0): Merge to (*lead, C, H, W).
-    raise NotImplementedError("Q2.0: unpatchify")
+    return x.reshape(*lead, c, h, w)
 
 
 # --------------------------------------------------------------------------- #
@@ -219,16 +219,18 @@ class MiniLVSM(nn.Module):
         grid = int(math.isqrt(n))
         # TODO (Q2.0): Build the (N, D) positional embedding for the grid x grid
         # patch layout with sincos_2d_pos_embed, matching the tokens' device/dtype.
-        pos = None
+        pos = sincos_2d_pos_embed(
+            d, grid, grid, device=source_tokens.device, dtype=source_tokens.dtype
+        )
         # TODO (Q2.0): Add it to the source and target tokens.
-        source = None  # (B, S, N, D)
-        target = None  # (B, T, N, D)
+        source = source_tokens + pos
+        target = target_tokens + pos
         # TODO (Q2.0): Flatten each sample's sources into S*N tokens and repeat
         # them for every target: (B, T, S*N, D).
-        source = None
+        source = source.reshape(b, 1, s * n, d).expand(b, t, s * n, d)
         # TODO (Q2.0): Append each target's N query tokens after its sources,
         # then fold T into the batch: (B*T, (S+1)*N, D).
-        raise NotImplementedError("Q2.0: MiniLVSM.build_tokens")
+        return torch.cat((source, target), dim=2).reshape(b * t, (s + 1) * n, d)
 
     # ---- Q2.0 ------------------------------------------------------------ #
     def forward(self, inputs):
@@ -252,17 +254,18 @@ class MiniLVSM(nn.Module):
 
         # TODO (Q2.0): Concatenate source RGB shifted to [-1, 1] with the source
         # Plucker rays along channels: (B, S, 9, H, W).
-        source = None
+        source = torch.cat((source_rgb * 2 - 1, inputs["source_plucker"]), dim=2)
         # TODO (Q2.0): Patchify and project the sources with self.source_proj
         # and the target rays with self.target_proj (the target never sees RGB).
-        source_tokens = None  # (B, S, N, D)
-        target_tokens = None  # (B, T, N, D)
+        source_tokens = self.source_proj(patchify(source, p))
+        target_tokens = self.target_proj(patchify(target_plucker, p))
         # TODO (Q2.0): Build the tokens, apply self.input_norm, then every block.
-        tokens = None  # (B*T, (S+1)*N, D)
+        tokens = self.input_norm(self.build_tokens(source_tokens, target_tokens))
+        for block in self.blocks:
+            tokens = block(tokens)
         # TODO (Q2.0): Keep only each sequence's last N (target-query) tokens and
         # decode them with self.out_norm, self.rgb_head and a sigmoid.
-        patches = None  # (B*T, N, p*p*3)
+        patches = torch.sigmoid(self.rgb_head(self.out_norm(tokens[:, -n:])))
         # TODO (Q2.0): Unpatchify and restore (B, T, 3, H, W).
-        rgb = None
-        raise NotImplementedError("Q2.0: MiniLVSM.forward")
+        rgb = unpatchify(patches, p, (h, w)).reshape(b, t, 3, h, w)
         return {"rgb": rgb}

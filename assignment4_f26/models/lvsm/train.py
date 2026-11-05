@@ -16,7 +16,7 @@ import torch
 
 from a4data.dataset import lvsm_inputs, lvsm_targets
 from models.lvsm.eval import evaluate
-from models.lvsm.losses import compute_loss  # noqa: F401 -- used in TODOs
+from models.lvsm.losses import compute_loss, compute_loss_terms  # noqa: F401 -- used in TODOs
 from models.lvsm.metrics import psnr
 from models.lvsm.utils import (
     build_model,
@@ -36,6 +36,7 @@ def train_one_epoch(
     scheduler=None,
     grad_clip=None,
     amp=False,
+    l1_weight=0.0,
 ):
     """Q2.0: Train target RGB synthesis and return a dict of epoch-average losses.
 
@@ -53,7 +54,7 @@ def train_one_epoch(
         Dict with loss (MSE) and psnr, averaged over every target image seen.
     """
     model.train()
-    totals = {"loss": 0.0, "psnr": 0.0}
+    totals = {"loss": 0.0, "mse": 0.0, "l1": 0.0, "psnr": 0.0}
     count = 0
     for batch in loader:
         batch = to_device(batch, device)
@@ -62,11 +63,13 @@ def train_one_epoch(
 
         # TODO (Q2.0): Run model(inputs) under torch.autocast with
         # device.type, bfloat16 and enabled=amp.
-        predictions = None
+        with torch.autocast(device.type, dtype=torch.bfloat16, enabled=amp):
+            predictions = model(inputs)
         # TODO (Q2.0): Cast every prediction to float32 (the loss is computed
         # outside autocast), then compute the loss with compute_loss.
-        loss = None
-        raise NotImplementedError("Q2.0: train_one_epoch")
+        predictions = {k: v.float() for k, v in predictions.items()}
+        terms = compute_loss_terms(predictions, targets, l1_weight)
+        loss = terms["loss"]
 
         optimizer.zero_grad(set_to_none=True)
         loss.backward()
@@ -78,6 +81,8 @@ def train_one_epoch(
 
         n = targets["rgb"].shape[0] * targets["rgb"].shape[1]  # images = B * T
         totals["loss"] += loss.item() * n
+        totals["mse"] += terms["mse"].item() * n
+        totals["l1"] += terms["l1"].item() * n
         totals["psnr"] += psnr(
             predictions["rgb"].detach().flatten(0, 1), targets["rgb"].flatten(0, 1)
         ).sum().item()
@@ -134,6 +139,7 @@ def main():
     config = load_config(args.config)
     tr = config["training"]
     s = config["num_source_views"]
+    l1_weight = config.get("loss", {}).get("l1_weight", 0.0)
     output_dir = Path(args.output_dir or tr["output_dir"])
     output_dir.mkdir(parents=True, exist_ok=True)
     device = select_device(args.device)
@@ -176,14 +182,14 @@ def main():
 
     n_params = sum(p.numel() for p in model.parameters()) / 1e6
     print(f"Mini-LVSM: {n_params:.1f}M params, device {device}, S={s}, "
-          f"{len(train_loader)} steps/epoch, {epochs} epochs")
+          f"{len(train_loader)} steps/epoch, {epochs} epochs, l1_weight {l1_weight}")
     amp = tr.get("amp", False) and device.type == "cuda"
     log_path = output_dir / "log.jsonl"
     for epoch in range(start_epoch, epochs):
         start = time.time()
         train = train_fn(
             model, train_loader, optimizer, device, s, scheduler,
-            grad_clip=tr.get("grad_clip"), amp=amp,
+            grad_clip=tr.get("grad_clip"), amp=amp, l1_weight=l1_weight,
         )
         vis = output_dir / f"val_epoch{epoch:03d}.png" if epoch % vis_every == 0 else None
         val = evaluate(model, val_loader, device, s, vis_path=vis, loss_fn=loss_fn)
@@ -191,7 +197,8 @@ def main():
         with open(log_path, "a") as f:
             f.write(json.dumps(record) + "\n")
         print(
-            f"epoch {epoch:3d} | train loss {train['loss']:.5f} psnr {train['psnr']:.2f} "
+            f"epoch {epoch:3d} | train loss {train['loss']:.5f} mse {train['mse']:.5f} "
+            f"l1 {train['l1']:.5f} psnr {train['psnr']:.2f} "
             f"| val loss {val['loss']:.5f} psnr {val['psnr']:.2f} ssim {val['ssim']:.4f} "
             f"| {record['seconds']:.0f}s"
         )

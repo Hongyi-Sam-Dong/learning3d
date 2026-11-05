@@ -1,0 +1,119 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Assignment 4 · Hongyi (Sam) Dong</title><style>*{box-sizing:border-box}body{margin:0;color:#172c31;background:#fcfbf8;font:17px/1.6 system-ui,sans-serif}header,main,nav,footer{max-width:1040px;margin:auto;padding:0 30px}header{padding-top:64px;padding-bottom:32px}header p,small,figcaption{color:#53666a}h1,h2,h3{line-height:1.15}h1,h2{font-family:Georgia,serif;font-weight:500;letter-spacing:-.035em}h1{font-size:clamp(44px,6vw,78px);max-width:940px;margin:20px 0}nav{display:flex;gap:24px;flex-wrap:wrap;padding-top:15px;padding-bottom:15px;border-block:1px solid #ced7d5}a,summary,small{color:#17666a}section{padding:46px 0;border-bottom:1px solid #ced7d5}h2{font-size:clamp(34px,4vw,52px);margin:0 0 28px}small{font:600 14px system-ui;display:block;margin-bottom:12px;letter-spacing:.07em}h3{margin:42px 0 12px;font-size:25px}h4{margin:30px 0 8px}p{max-width:86ch}img{display:block;width:100%;height:auto}figure{margin:20px 0;max-width:100%;min-width:0}figure a{display:block;background:white}figure img{max-height:580px;object-fit:contain;background:white;border:1px solid #dee4e1}figcaption{font-size:14px;padding-top:6px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}.scroll,pre{overflow:auto}table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums;margin:20px 0;font-size:15px}th,td{padding:8px 13px;text-align:right;border-bottom:1px solid #d6dfdd}th{background:#e9f1ee}td:first-child,th:first-child{text-align:left}summary{cursor:pointer;font-weight:600;padding:12px 0}pre{background:#eef1ee;padding:15px;font-size:13px}footer{padding-block:34px}@media(max-width:650px){.grid{grid-template-columns:1fr}header,main,nav,footer{padding-inline:16px}th,td{padding:5px}nav{gap:12px}}</style><header id="top"><small>CMU 16-825 · Learning for 3D Vision · Fall 2026</small><h1>Learning geometry from multiple views</h1><p>Assignment 4 · Hongyi (Sam) Dong</p></header><nav aria-label="Report sections"><a href="#p1">1 · Data geometry</a><a href="#p2">2 · Mini-LVSM</a><a href="#p3">3 · Mini-VGGT</a></nav><main><section id="p1"><h2><small>Part 1</small>From depth pixels to camera rays</h2><p>I resized the camera intrinsics to the image grid, scaling each focal length along its own axis and shifting the principal point with the pixel-center rule c′ = s(c + 0.5) − 0.5. For a pixel p = [u, v, 1]ᵀ with valid z-depth z, the camera-space point is zK⁻¹p. Applying the camera-to-world pose puts the colored points from all eight views into one room.</p><div class="grid"><figure><a href="assets/upload_q1_unprojection.png"><img loading="lazy" src="assets/upload_q1_unprojection.png" alt="Unprojection · points and cameras in meters"></a><figcaption>Unprojection · points and cameras in meters</figcaption></figure><figure><a href="assets/upload_q1_canonicalization.png"><img loading="lazy" src="assets/upload_q1_canonicalization.png" alt="Canonicalization · first camera at the origin, centroid distance 1.000"></a><figcaption>Canonicalization · first camera at the origin, centroid distance 1.000</figcaption></figure></div><p>I expressed every pose relative to the first camera as T₀⁻¹Tᵢ, then divided depth, point coordinates and camera translations by the shared scene scale. In this clip the scale is 1.867 m. The first camera center is (0, 0, 0), and the centroid of the valid points lies one normalized unit away.</p><p>Each pixel ray starts at camera center o and points along the unit direction d = normalize(RK⁻¹p). Its six Plücker channels are [d, o × d]. The moment o × d locates the line relative to the origin and stays the same if o moves along that line. On four training clips the maximum point and ray reprojection errors were both below 0.00013 pixels.</p><details><summary>Full data checker output · four training clips</summary><pre>{
+  &quot;split&quot;: &quot;train&quot;,
+  &quot;dataset_samples&quot;: 224,
+  &quot;checked_samples&quot;: 4,
+  &quot;samples&quot;: [
+    {
+      &quot;sequence_name&quot;: &quot;e050c15a8d_frame_007080&quot;,
+      &quot;views&quot;: 8,
+      &quot;resolution&quot;: 224,
+      &quot;valid_depth_fraction&quot;: 0.9779127240180969,
+      &quot;max_reprojection_error_px&quot;: 0.00010844774078577757,
+      &quot;max_ray_reprojection_error_px&quot;: 9.41436446737498e-05,
+      &quot;centroid_distance&quot;: 1.0
+    },
+    {
+      &quot;sequence_name&quot;: &quot;5f99900f09_frame_002820&quot;,
+      &quot;views&quot;: 8,
+      &quot;resolution&quot;: 224,
+      &quot;valid_depth_fraction&quot;: 0.9903116226196289,
+      &quot;max_reprojection_error_px&quot;: 0.0001220703125,
+      &quot;max_ray_reprojection_error_px&quot;: 0.0001078959321603179,
+      &quot;centroid_distance&quot;: 1.0
+    },
+    {
+      &quot;sequence_name&quot;: &quot;47b37eb6f9_frame_002720&quot;,
+      &quot;views&quot;: 8,
+      &quot;resolution&quot;: 224,
+      &quot;valid_depth_fraction&quot;: 0.9609947800636292,
+      &quot;max_reprojection_error_px&quot;: 9.281559323426336e-05,
+      &quot;max_ray_reprojection_error_px&quot;: 8.446346328128129e-05,
+      &quot;centroid_distance&quot;: 1.0
+    },
+    {
+      &quot;sequence_name&quot;: &quot;4c5c60fa76_frame_006690&quot;,
+      &quot;views&quot;: 8,
+      &quot;resolution&quot;: 224,
+      &quot;valid_depth_fraction&quot;: 0.7516716122627258,
+      &quot;max_reprojection_error_px&quot;: 0.00010504279634915292,
+      &quot;max_ray_reprojection_error_px&quot;: 9.423537994734943e-05,
+      &quot;centroid_distance&quot;: 1.0
+    }
+  ],
+  &quot;batch_shapes&quot;: {
+    &quot;rgb&quot;: [
+      2,
+      8,
+      3,
+      224,
+      224
+    ],
+    &quot;depth&quot;: [
+      2,
+      8,
+      1,
+      224,
+      224
+    ],
+    &quot;depth_valid&quot;: [
+      2,
+      8,
+      1,
+      224,
+      224
+    ],
+    &quot;K&quot;: [
+      2,
+      8,
+      3,
+      3
+    ],
+    &quot;frame_numbers&quot;: [
+      2,
+      8
+    ],
+    &quot;T_world_from_camera&quot;: [
+      2,
+      8,
+      4,
+      4
+    ],
+    &quot;original_world_from_reference&quot;: [
+      2,
+      4,
+      4
+    ],
+    &quot;scene_scale&quot;: [
+      2
+    ],
+    &quot;points_world&quot;: [
+      2,
+      8,
+      3,
+      224,
+      224
+    ],
+    &quot;ray_origins&quot;: [
+      2,
+      8,
+      3,
+      224,
+      224
+    ],
+    &quot;ray_directions&quot;: [
+      2,
+      8,
+      3,
+      224,
+      224
+    ],
+    &quot;plucker&quot;: [
+      2,
+      8,
+      6,
+      224,
+      224
+    ]
+  }
+}
+</pre></details></section><section id="p2"><h2><small>Part 2</small>Novel-view synthesis with Mini-LVSM</h2><h3>2.0 · Predicting an RGB image from target rays</h3><p>For each source view I combined RGB with its six ray channels and embedded 8 × 8 patches. Each target contributes a separate set of ray-only query tokens. After attention over the sources and one target, the RGB head decodes the target tokens and rearranges the predicted patches into an image.</p><h3>2.1 · Fitting one training example</h3><p>After 2,000 updates the fixed overfit example reached 30.99 dB PSNR. The predicted table and chairs follow the target viewpoint; their edges are softer than in the target.</p><figure><a href="assets/lvsm_overfit_val_epoch000.png"><img loading="lazy" src="assets/lvsm_overfit_val_epoch000.png" alt="Overfit result · two source views, ground truth, prediction"></a><figcaption>Overfit result · two source views, ground truth, prediction</figcaption></figure><h3>2.2 · Training and ray-conditioning ablations</h3><p>I trained the 14.6M-parameter transformer from scratch for 100 epochs (5,600 updates), using width 384, eight layers, two source views, batch size four and MSE. AdamW used a peak learning rate of 0.0002 with 200 warmup steps followed by cosine decay. Validation PSNR peaked at epoch 99.</p><figure><img src="assets/training.png" alt="Training and validation MSE and PSNR, and validation SSIM over 100 epochs"><figcaption>100-epoch baseline training history</figcaption></figure><div class="grid"><figure><a href="assets/lvsm_val_epoch000.png"><img loading="lazy" src="assets/lvsm_val_epoch000.png" alt="Validation predictions during training · epoch 0"></a><figcaption>Validation predictions during training · epoch 0</figcaption></figure><figure><a href="assets/lvsm_val_epoch095.png"><img loading="lazy" src="assets/lvsm_val_epoch095.png" alt="Validation predictions during training · epoch 95"></a><figcaption>Validation predictions during training · epoch 95</figcaption></figure></div><div class="scroll"><table><thead><tr><th>Source views</th><th>Target rays</th><th>Target images</th><th>PSNR (dB) ↑</th><th>SSIM ↑</th></tr></thead><tbody><tr><td>1</td><td>correct</td><td>196</td><td>15.20</td><td>0.5581</td></tr><tr><td>1</td><td>shuffled</td><td>196</td><td>11.80</td><td>0.4874</td></tr><tr><td>1</td><td>none</td><td>196</td><td>12.49</td><td>0.5264</td></tr><tr><td>2</td><td>correct</td><td>168</td><td>16.12</td><td>0.5599</td></tr><tr><td>2</td><td>shuffled</td><td>168</td><td>11.49</td><td>0.4721</td></tr><tr><td>2</td><td>none</td><td>168</td><td>12.46</td><td>0.5256</td></tr><tr><td>4</td><td>correct</td><td>112</td><td>16.87</td><td>0.5749</td></tr><tr><td>4</td><td>shuffled</td><td>112</td><td>11.59</td><td>0.4726</td></tr><tr><td>4</td><td>none</td><td>112</td><td>12.46</td><td>0.5355</td></tr></tbody></table></div><p>With correct rays, PSNR rose from 15.20 dB with one source to 16.87 dB with four. At two sources, giving the model rays from the wrong target cost 4.63 dB; zeroing the rays cost 3.66 dB. The mismatched rays appear to steer the prediction toward the wrong view. The number of held-out targets also changes with source count, so the three view-count settings cover different target sets.</p><details><summary>Evaluation images · all nine settings</summary><div class="grid"><figure><a href="assets/lvsm_S1_correct.png"><img loading="lazy" src="assets/lvsm_S1_correct.png" alt="S1 · correct · sources, ground truth, prediction"></a><figcaption>S1 · correct · sources, ground truth, prediction</figcaption></figure><figure><a href="assets/lvsm_S1_none.png"><img loading="lazy" src="assets/lvsm_S1_none.png" alt="S1 · none · sources, ground truth, prediction"></a><figcaption>S1 · none · sources, ground truth, prediction</figcaption></figure><figure><a href="assets/lvsm_S1_shuffled.png"><img loading="lazy" src="assets/lvsm_S1_shuffled.png" alt="S1 · shuffled · sources, ground truth, prediction"></a><figcaption>S1 · shuffled · sources, ground truth, prediction</figcaption></figure><figure><a href="assets/lvsm_S2_correct.png"><img loading="lazy" src="assets/lvsm_S2_correct.png" alt="S2 · correct · sources, ground truth, prediction"></a><figcaption>S2 · correct · sources, ground truth, prediction</figcaption></figure><figure><a href="assets/lvsm_S2_none.png"><img loading="lazy" src="assets/lvsm_S2_none.png" alt="S2 · none · sources, ground truth, prediction"></a><figcaption>S2 · none · sources, ground truth, prediction</figcaption></figure><figure><a href="assets/lvsm_S2_shuffled.png"><img loading="lazy" src="assets/lvsm_S2_shuffled.png" alt="S2 · shuffled · sources, ground truth, prediction"></a><figcaption>S2 · shuffled · sources, ground truth, prediction</figcaption></figure><figure><a href="assets/lvsm_S4_correct.png"><img loading="lazy" src="assets/lvsm_S4_correct.png" alt="S4 · correct · sources, ground truth, prediction"></a><figcaption>S4 · correct · sources, ground truth, prediction</figcaption></figure><figure><a href="assets/lvsm_S4_none.png"><img loading="lazy" src="assets/lvsm_S4_none.png" alt="S4 · none · sources, ground truth, prediction"></a><figcaption>S4 · none · sources, ground truth, prediction</figcaption></figure><figure><a href="assets/lvsm_S4_shuffled.png"><img loading="lazy" src="assets/lvsm_S4_shuffled.png" alt="S4 · shuffled · sources, ground truth, prediction"></a><figcaption>S4 · shuffled · sources, ground truth, prediction</figcaption></figure></div></details><h3>2.3 · Does an L1 term improve the prediction?</h3><p>I trained a second model from the same seed with the same 100-epoch schedule, changing the objective to MSE + 0.1 × mean absolute RGB error. I compared the best-validation-PSNR checkpoint of each run on the same 168 target images with two sources and correct rays.</p><div class="scroll"><table><thead><tr><th>Training objective</th><th>Validation MSE ↓</th><th>PSNR (dB) ↑</th><th>SSIM ↑</th></tr></thead><tbody><tr><td>MSE</td><td>0.02946</td><td>16.12</td><td>0.5599</td></tr><tr><td>MSE + 0.1 × L1</td><td>0.02896</td><td>16.23</td><td>0.5616</td></tr></tbody></table></div><div class="grid"><figure><a href="assets/lvsm_S2_correct.png"><img loading="lazy" src="assets/lvsm_S2_correct.png" alt="MSE · two sources, target, prediction"></a><figcaption>MSE · two sources, target, prediction</figcaption></figure><figure><a href="assets/lvsm_mse_l1_S2_correct.png"><img loading="lazy" src="assets/lvsm_mse_l1_S2_correct.png" alt="MSE + 0.1 × L1 · same validation example"></a><figcaption>MSE + 0.1 × L1 · same validation example</figcaption></figure></div><p>The added L1 term improved PSNR by about 0.10 dB and SSIM by 0.0017 on the unrounded scores. The overall room layout is recognizable, but the prediction still smooths over fine furniture edges. This single-seed comparison supports a small numerical gain; it gives little evidence of a large change in sharpness.</p></section><section id="p3"><h2><small>Part 3</small>Camera and depth estimation with Mini-VGGT</h2><h3>3.0 · Reconstructing a scene from eight images</h3><p>A frozen DINOv2 ViT-B/14 encoder supplies patch features. Eight transformer pairs alternate attention within each image and across the eight views. The camera head predicts translation, a quaternion and field of view. The depth head predicts positive depth and confidence with RGB-guided refinement. I used a camera loss weight of 5 and a depth loss weight of 1, including confidence-weighted regression and a multiscale depth-gradient term.</p><h3>3.1 · Single-clip overfit</h3><p>I trained on one fixed clip for 40 epochs of 25 steps at an initial learning rate of 0.001. The prediction recovers the back wall, central opening and foreground furniture, while some point boundaries remain thicker than in the ground truth.</p><figure><a href="assets/vggt_overfit_loss_curve.png"><img loading="lazy" src="assets/vggt_overfit_loss_curve.png" alt="Single-clip training · total, camera and depth losses"></a><figcaption>Single-clip training · total, camera and depth losses</figcaption></figure><div class="grid"><figure><a href="assets/upload_q31_overfit_gt.png"><img loading="lazy" src="assets/upload_q31_overfit_gt.png" alt="Ground truth · training clip"></a><figcaption>Ground truth · training clip</figcaption></figure><figure><a href="assets/upload_q31_overfit_pred.png"><img loading="lazy" src="assets/upload_q31_overfit_pred.png" alt="Prediction · same clip"></a><figcaption>Prediction · same clip</figcaption></figure></div><h3>3.2 · Reconstruction on held-out scenes</h3><p>Validation PSNR in Part 2 was still improving at epoch 99, so I kept the longer default schedule of 1,000 epochs for both Part 3 experiments. I used eight 224 × 224 views from a 32-frame window, batch size 16 and AdamW with a peak learning rate of 0.0006, ten warmup epochs and cosine decay. I selected the joint checkpoint by minimum validation loss and evaluated it on the full validation and test splits with seed 825 and eight views drawn from the first 32 prepared frames.</p><figure><a href="assets/vggt_train_loss_curve.png"><img loading="lazy" src="assets/vggt_train_loss_curve.png" alt="Joint training · total, camera and depth losses"></a><figcaption>Joint training · total, camera and depth losses</figcaption></figure><div class="scroll"><table><thead><tr><th>Metric · best checkpoint</th><th>Validation</th><th>Test</th></tr></thead><tbody><tr><td>Depth AbsRel ↓</td><td>0.1434</td><td>0.1661</td></tr><tr><td>Depth δ1 ↑</td><td>0.8185</td><td>0.7890</td></tr><tr><td>Rotation AUC @ 5° ↑</td><td>0.1844</td><td>0.1834</td></tr><tr><td>Rotation AUC @ 15° ↑</td><td>0.5255</td><td>0.5024</td></tr><tr><td>Rotation AUC @ 30° ↑</td><td>0.7070</td><td>0.7080</td></tr><tr><td>Translation AUC @ 5° ↑</td><td>0.0128</td><td>0.0094</td></tr><tr><td>Translation AUC @ 15° ↑</td><td>0.0857</td><td>0.0452</td></tr><tr><td>Translation AUC @ 30° ↑</td><td>0.1998</td><td>0.1402</td></tr><tr><td>Joint pose AUC @ 5° ↑</td><td>0.0031</td><td>0.0013</td></tr><tr><td>Joint pose AUC @ 15° ↑</td><td>0.0648</td><td>0.0281</td></tr><tr><td>Joint pose AUC @ 30° ↑</td><td>0.1788</td><td>0.1239</td></tr></tbody></table></div><p>The metric gap between rotation and translation is visible at 15°: validation rotation AUC is 0.5255, while translation-direction AUC is 0.0857. A scene can retain a recognizable floor and walls even when individual camera positions and object boundaries do not align closely.</p><h4>Scene 1 · 09c1414f1b</h4><div class="grid"><figure><a href="assets/upload_q32_scene01_gt.png"><img loading="lazy" src="assets/upload_q32_scene01_gt.png" alt="Ground truth"></a><figcaption>Ground truth</figcaption></figure><figure><a href="assets/upload_q32_scene01_pred.png"><img loading="lazy" src="assets/upload_q32_scene01_pred.png" alt="Predicted camera and depth"></a><figcaption>Predicted camera and depth</figcaption></figure></div><p>The table and window occupy the correct region, but the chair legs merge into the table in the predicted depth map.</p><h4>Scene 2 · 21d970d8de</h4><div class="grid"><figure><a href="assets/upload_q32_scene02_gt.png"><img loading="lazy" src="assets/upload_q32_scene02_gt.png" alt="Ground truth"></a><figcaption>Ground truth</figcaption></figure><figure><a href="assets/upload_q32_scene02_pred.png"><img loading="lazy" src="assets/upload_q32_scene02_pred.png" alt="Predicted camera and depth"></a><figcaption>Predicted camera and depth</figcaption></figure></div><p>The floor remains continuous. The prediction softens the boundary along the narrow table and the red chair.</p><h4>Scene 3 · 280b83fcf3</h4><div class="grid"><figure><a href="assets/upload_q32_scene03_gt.png"><img loading="lazy" src="assets/upload_q32_scene03_gt.png" alt="Ground truth"></a><figcaption>Ground truth</figcaption></figure><figure><a href="assets/upload_q32_scene03_pred.png"><img loading="lazy" src="assets/upload_q32_scene03_pred.png" alt="Predicted camera and depth"></a><figcaption>Predicted camera and depth</figcaption></figure></div><p>The hallway and doorway are visible in both reconstructions. Depth transitions along the door frames are smoother in the prediction.</p><h4>Scene 4 · 2b1dc6d6a5</h4><div class="grid"><figure><a href="assets/upload_q32_scene04_gt.png"><img loading="lazy" src="assets/upload_q32_scene04_gt.png" alt="Ground truth"></a><figcaption>Ground truth</figcaption></figure><figure><a href="assets/upload_q32_scene04_pred.png"><img loading="lazy" src="assets/upload_q32_scene04_pred.png" alt="Predicted camera and depth"></a><figcaption>Predicted camera and depth</figcaption></figure></div><p>The office chair is visible, but the seat and armrest have less distinct boundaries than in the ground truth.</p><h3>3.3 · Does camera supervision help depth?</h3><p>I compared joint training against an otherwise identical run with the camera loss weight set to zero. Both started with the same initialization, used seed 825 and ran for 1,000 epochs. I evaluated the final checkpoint of each run on the same validation split so that checkpoint selection would not favor either objective.</p><div class="scroll"><table><thead><tr><th>Supervision · final checkpoint</th><th>Depth AbsRel ↓</th><th>Depth δ1 ↑</th></tr></thead><tbody><tr><td>Depth only</td><td>0.1603</td><td>79.45%</td></tr><tr><td>Camera + depth</td><td>0.1442</td><td>83.06%</td></tr></tbody></table></div><figure><img src="assets/synergy.png" alt="Depth accuracy of joint versus depth-only training"></figure><p>Camera supervision reduced relative depth error by about 10% and increased the fraction of valid pixels within the δ1 threshold by 3.61 percentage points. Predicting pose may encourage the shared features to encode cross-view geometry. The comparison used one seed, and camera gradients also affect the shared gradient-clipping step, so this experiment cannot separate those effects.</p></section></main><footer><a href="#top">Back to top ↑</a></footer></html>

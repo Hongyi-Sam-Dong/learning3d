@@ -35,11 +35,10 @@ def camera_loss(predictions, targets):
     pred_q, gt_q = predicted[..., 3:7], expected[..., 3:7]
     pred_fov, gt_fov = predicted[..., 7:], expected[..., 7:]
     # TODO (Q3.0): Mean translation L1, clamping each error at 100 before averaging.
-    translation = None
+    translation = (pred_t - gt_t).abs().clamp(max=100).mean()
     # TODO (Q3.0): Mean quaternion L1 and mean FoV L1.
-    rotation = None
-    fov = None
-    raise NotImplementedError("Q3.0: camera_loss")
+    rotation = (pred_q - gt_q).abs().mean()
+    fov = (pred_fov - gt_fov).abs().mean()
     return translation + rotation + 0.5 * fov
 
 
@@ -63,11 +62,11 @@ def depth_gradient_loss(prediction, target, valid):
         valid_x = mask[..., 1:] & mask[..., :-1]
         valid_y = mask[..., 1:, :] & mask[..., :-1, :]
         # TODO (Q3.0): Absolute adjacent residual differences, clamped at 100.
-        dx = None  # Same shape as valid_x.
-        dy = None  # Same shape as valid_y.
+        dx = (diff[..., 1:] - diff[..., :-1]).abs().clamp(max=100)
+        dy = (diff[..., 1:, :] - diff[..., :-1, :]).abs().clamp(max=100)
         # TODO (Q3.0): Sum valid x/y differences, divide by mask.sum().clamp_min(1).
-        scale_loss = None  # Scalar ().
-        raise NotImplementedError("Q3.0: depth_gradient_loss")
+        edge_sum = torch.where(valid_x, dx, 0.0).sum() + torch.where(valid_y, dy, 0.0).sum()
+        scale_loss = edge_sum / mask.sum().clamp_min(1)
         total = total + scale_loss
     return total / 4
 
@@ -94,11 +93,10 @@ def depth_loss(predictions, targets):
     gt_depth = targets["depth"][valid]
     confidence = predictions["depth_conf"][valid]
     # TODO (Q3.0): Per-pixel absolute depth error.
-    error = None  # (num_valid_pixels,).
+    error = (pred_depth - gt_depth).abs()
     # TODO (Q3.0): Use trimmed_mean for regression and confidence-weighted loss.
-    regression = None
-    confidence_loss = None
-    raise NotImplementedError("Q3.0: depth_loss")
+    regression = trimmed_mean(error)
+    confidence_loss = trimmed_mean(confidence * error - 0.2 * torch.log(confidence))
     gradient = depth_gradient_loss(predictions["depth"], targets["depth"], valid)
     return regression + confidence_loss + gradient
 
