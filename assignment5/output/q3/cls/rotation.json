@@ -1,0 +1,196 @@
+{
+  "task": "cls",
+  "experiment": "rotation",
+  "metric": "object accuracy",
+  "baseline_accuracy": 0.9674711437565582,
+  "q1_q2_reported_accuracy": 0.9674711437565582,
+  "conditions": [
+    {
+      "condition": "0deg",
+      "value": 0,
+      "num_points": 10000,
+      "accuracy": 0.9674711437565582,
+      "delta_pp": 0.0,
+      "visualized": [
+        {
+          "object_id": 479,
+          "gt": "chair",
+          "pred": "chair",
+          "pred_prob": 1.0
+        },
+        {
+          "object_id": 852,
+          "gt": "lamp",
+          "pred": "lamp",
+          "pred_prob": 0.9999998807907104
+        },
+        {
+          "object_id": 909,
+          "gt": "lamp",
+          "pred": "lamp",
+          "pred_prob": 1.0
+        }
+      ]
+    },
+    {
+      "condition": "15deg",
+      "value": 15,
+      "num_points": 10000,
+      "accuracy": 0.9527806925498427,
+      "delta_pp": -1.4690451206715527,
+      "visualized": [
+        {
+          "object_id": 479,
+          "gt": "chair",
+          "pred": "chair",
+          "pred_prob": 1.0
+        },
+        {
+          "object_id": 852,
+          "gt": "lamp",
+          "pred": "lamp",
+          "pred_prob": 0.9997745156288147
+        },
+        {
+          "object_id": 909,
+          "gt": "lamp",
+          "pred": "lamp",
+          "pred_prob": 1.0
+        }
+      ]
+    },
+    {
+      "condition": "30deg",
+      "value": 30,
+      "num_points": 10000,
+      "accuracy": 0.7922350472193075,
+      "delta_pp": -17.52360965372507,
+      "visualized": [
+        {
+          "object_id": 479,
+          "gt": "chair",
+          "pred": "chair",
+          "pred_prob": 0.999733030796051
+        },
+        {
+          "object_id": 852,
+          "gt": "lamp",
+          "pred": "lamp",
+          "pred_prob": 0.7111606597900391
+        },
+        {
+          "object_id": 909,
+          "gt": "lamp",
+          "pred": "lamp",
+          "pred_prob": 1.0
+        }
+      ]
+    },
+    {
+      "condition": "60deg",
+      "value": 60,
+      "num_points": 10000,
+      "accuracy": 0.310598111227702,
+      "delta_pp": -65.68730325288563,
+      "visualized": [
+        {
+          "object_id": 479,
+          "gt": "chair",
+          "pred": "lamp",
+          "pred_prob": 0.7264822125434875
+        },
+        {
+          "object_id": 852,
+          "gt": "lamp",
+          "pred": "vase",
+          "pred_prob": 0.998796820640564
+        },
+        {
+          "object_id": 909,
+          "gt": "lamp",
+          "pred": "lamp",
+          "pred_prob": 1.0
+        }
+      ]
+    },
+    {
+      "condition": "90deg",
+      "value": 90,
+      "num_points": 10000,
+      "accuracy": 0.2654774396642183,
+      "delta_pp": -70.19937040923398,
+      "visualized": [
+        {
+          "object_id": 479,
+          "gt": "chair",
+          "pred": "vase",
+          "pred_prob": 0.6346133947372437
+        },
+        {
+          "object_id": 852,
+          "gt": "lamp",
+          "pred": "lamp",
+          "pred_prob": 0.9516520500183105
+        },
+        {
+          "object_id": 909,
+          "gt": "lamp",
+          "pred": "lamp",
+          "pred_prob": 1.0
+        }
+      ]
+    }
+  ],
+  "settings": {
+    "checkpoint": "./checkpoints/cls/best_model.pt",
+    "checkpoint_epoch": 109,
+    "checkpoint_val_acc": 0.9778761061946902,
+    "checkpoint_config": {
+      "task": "cls",
+      "num_cls_class": 3,
+      "num_seg_class": 6,
+      "num_points": 10000,
+      "num_epochs": 250,
+      "batch_size": 32,
+      "num_workers": 0,
+      "lr": 0.001,
+      "val_frac": 0.1,
+      "seed": 0,
+      "device": "cuda",
+      "exp_name": "exp",
+      "main_dir": "./data/",
+      "checkpoint_dir": "./checkpoints/cls",
+      "log_dir": "./logs",
+      "checkpoint_every": 10,
+      "load_checkpoint": "",
+      "overwrite": false
+    },
+    "data_dir": "./data/",
+    "num_points": 10000,
+    "seed": 0,
+    "batch_size": 16,
+    "device": "cuda",
+    "point_sampling": "per-object random permutation of all available points from numpy default_rng(seed); the first num_points indices are used, so smaller subsets are nested in larger ones",
+    "rotation_axis": "x",
+    "rotation_angles_deg": [
+      0,
+      15,
+      30,
+      60,
+      90
+    ],
+    "point_fractions": [
+      1.0,
+      0.5,
+      0.25,
+      0.125
+    ],
+    "rotation_convention": "points are row vectors p and are replaced by R p, with R the right-handed rotation about the +x axis; the data is Y-up (objects stand along +Y). Rotation is applied after point selection, so point identity and labels are unchanged",
+    "num_points_convention": "the first k indices of the same per-object permutation used for the baseline (nested subsets, sampled without replacement); seg labels use the same indices",
+    "visualized_object_ids": [
+      479,
+      852,
+      909
+    ]
+  }
+}

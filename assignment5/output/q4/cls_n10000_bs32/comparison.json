@@ -1,0 +1,33 @@
+{
+  "available": true,
+  "baseline_dir": "./output/q1_cls",
+  "baseline_accuracy": 0.9674711437565582,
+  "baseline_eval_checkpoint": "./checkpoints/cls/best_model.pt",
+  "baseline_eval_checkpoint_epoch": 109,
+  "baseline_eval_seed": 0,
+  "baseline_eval_num_points": 10000,
+  "q4_eval_seed": 0,
+  "q4_eval_num_points": 10000,
+  "seed_match": true,
+  "num_points_match": true,
+  "baseline_checkpoint_file": "./checkpoints/cls/best_model.pt",
+  "baseline_checkpoint_sha256": "fd8331efcaec3ca9138d350287cdf50f565dec74d82dcb07c421976d0972fdfb",
+  "checkpoint_identity": "consistent: current file epoch/val_acc equal the values recorded by the baseline evaluation",
+  "training_differences": {},
+  "model": {
+    "baseline": "PointNet without T-Nets (models.py)",
+    "q4": "point_transformer_compact_v1"
+  },
+  "protocol_differences": [
+    "inference batch size 16 vs 8 (no effect on predictions in eval mode)"
+  ],
+  "matched_objects": true,
+  "point_indices": "identical: both use all 10000 points",
+  "baseline_accuracy_recomputed": 0.9674711437565582,
+  "q4_accuracy": 0.9790136411332634,
+  "both_correct": 909,
+  "q4_only_correct": 24,
+  "baseline_only_correct": 13,
+  "both_wrong": 7,
+  "same_prediction": 916
+}

@@ -1,0 +1,214 @@
+{
+  "task": "cls",
+  "arch": "point_transformer_compact_v1",
+  "accuracy": 0.9790136411332634,
+  "num_objects": 953,
+  "num_correct": 933,
+  "class_names": [
+    "chair",
+    "vase",
+    "lamp"
+  ],
+  "per_class": {
+    "chair": {
+      "num_objects": 617,
+      "num_misclassified": 2,
+      "accuracy": 0.9967585089141004
+    },
+    "vase": {
+      "num_objects": 102,
+      "num_misclassified": 9,
+      "accuracy": 0.9117647058823529
+    },
+    "lamp": {
+      "num_objects": 234,
+      "num_misclassified": 9,
+      "accuracy": 0.9615384615384616
+    }
+  },
+  "confusion_matrix_rows_gt_cols_pred": [
+    [
+      615,
+      2,
+      0
+    ],
+    [
+      0,
+      93,
+      9
+    ],
+    [
+      0,
+      9,
+      225
+    ]
+  ],
+  "visualizations": [
+    {
+      "kind": "random",
+      "object_id": 288,
+      "gt": "chair",
+      "q4_pred": "chair",
+      "q4_prob": 1.0,
+      "q1_pred": "chair",
+      "gif": "gifs/random_288_gt-chair_q4-chair.gif"
+    },
+    {
+      "kind": "random",
+      "object_id": 495,
+      "gt": "chair",
+      "q4_pred": "chair",
+      "q4_prob": 1.0,
+      "q1_pred": "chair",
+      "gif": "gifs/random_495_gt-chair_q4-chair.gif"
+    },
+    {
+      "kind": "random",
+      "object_id": 530,
+      "gt": "chair",
+      "q4_pred": "chair",
+      "q4_prob": 1.0,
+      "q1_pred": "chair",
+      "gif": "gifs/random_530_gt-chair_q4-chair.gif"
+    },
+    {
+      "kind": "random",
+      "object_id": 845,
+      "gt": "lamp",
+      "q4_pred": "lamp",
+      "q4_prob": 0.9999998807907104,
+      "q1_pred": "lamp",
+      "gif": "gifs/random_845_gt-lamp_q4-lamp.gif"
+    },
+    {
+      "kind": "random",
+      "object_id": 944,
+      "gt": "lamp",
+      "q4_pred": "lamp",
+      "q4_prob": 0.9999583959579468,
+      "q1_pred": "vase",
+      "gif": "gifs/random_944_gt-lamp_q4-lamp.gif"
+    },
+    {
+      "kind": "q4_fixes_q1",
+      "object_id": 812,
+      "gt": "lamp",
+      "q4_pred": "lamp",
+      "q4_prob": 1.0,
+      "q1_pred": "vase",
+      "gif": "gifs/q4_fixes_q1_812_gt-lamp_q4-lamp.gif"
+    },
+    {
+      "kind": "q4_fixes_q1",
+      "object_id": 770,
+      "gt": "lamp",
+      "q4_pred": "lamp",
+      "q4_prob": 0.9999997615814209,
+      "q1_pred": "vase",
+      "gif": "gifs/q4_fixes_q1_770_gt-lamp_q4-lamp.gif"
+    },
+    {
+      "kind": "q4_breaks_q1",
+      "object_id": 620,
+      "gt": "vase",
+      "q4_pred": "lamp",
+      "q4_prob": 0.9999624490737915,
+      "q1_pred": "vase",
+      "gif": "gifs/q4_breaks_q1_620_gt-vase_q4-lamp.gif"
+    },
+    {
+      "kind": "q4_breaks_q1",
+      "object_id": 664,
+      "gt": "vase",
+      "q4_pred": "lamp",
+      "q4_prob": 0.9998830556869507,
+      "q1_pred": "vase",
+      "gif": "gifs/q4_breaks_q1_664_gt-vase_q4-lamp.gif"
+    },
+    {
+      "kind": "q4_failure",
+      "object_id": 445,
+      "gt": "chair",
+      "q4_pred": "vase",
+      "q4_prob": 0.5060350894927979,
+      "q1_pred": "chair",
+      "gif": "gifs/q4_failure_445_gt-chair_q4-vase.gif"
+    },
+    {
+      "kind": "q4_failure",
+      "object_id": 620,
+      "gt": "vase",
+      "q4_pred": "lamp",
+      "q4_prob": 0.9999624490737915,
+      "q1_pred": "vase",
+      "gif": "gifs/q4_failure_620_gt-vase_q4-lamp.gif"
+    },
+    {
+      "kind": "q4_failure",
+      "object_id": 827,
+      "gt": "lamp",
+      "q4_pred": "vase",
+      "q4_prob": 0.9999998807907104,
+      "q1_pred": "vase",
+      "gif": "gifs/q4_failure_827_gt-lamp_q4-vase.gif"
+    }
+  ],
+  "selection": "random = numpy default_rng([seed, 1]) choice (same rule and ids as Q1); q4_fixes_q1 / q4_breaks_q1 = most confident Q4 predictions among disagreements; q4_failure = most confident Q4 error per ground-truth class",
+  "camera_and_color": "utils.render_view (elev 10, azim 30) and utils.viz_cls 360-degree ring, CLS_COLOR, same as Q1",
+  "settings": {
+    "checkpoint": {
+      "path": "./checkpoints/q4/cls_n10000_bs32/best_model.pt",
+      "sha256": "c2fdfdab5170367bbca34e4a09efaf23e108d66c41817804aaa9523e683f9563",
+      "epoch": 214,
+      "val_acc": 0.9867256637168141,
+      "model_config": {
+        "arch": "point_transformer_compact_v1",
+        "task": "cls",
+        "num_classes": 3,
+        "k": 16,
+        "dims": [
+          32,
+          64,
+          128,
+          256,
+          512
+        ],
+        "stride": 4,
+        "dropout": 0.5
+      },
+      "config": {
+        "task": "cls",
+        "num_points": 10000,
+        "batch_size": 32,
+        "k": 16,
+        "lr": 0.001,
+        "num_epochs": 250,
+        "val_frac": 0.1,
+        "seed": 0,
+        "num_workers": 0,
+        "num_cls_class": 3,
+        "num_seg_class": 6,
+        "device": "cuda",
+        "main_dir": "./data/",
+        "tag": "bs32",
+        "checkpoint_root": "./checkpoints/q4",
+        "log_root": "./logs/q4",
+        "checkpoint_every": 10,
+        "overwrite": false,
+        "resume": false,
+        "arch": "point_transformer_compact_v1",
+        "run_name": "cls_n10000_bs32",
+        "checkpoint_dir": "./checkpoints/q4/cls_n10000_bs32"
+      }
+    },
+    "num_points": 10000,
+    "num_available_points": 10000,
+    "seed": 0,
+    "batch_size": 8,
+    "device": "cuda",
+    "train_num_points": 10000,
+    "train_eval_points_match": true,
+    "point_sampling": "same as Q1/Q2: per-object permutation from numpy default_rng(seed) via utils.point_orders; the first num_points indices form one single model input per object",
+    "mode": "model.eval(), torch.no_grad(), batched over objects"
+  }
+}

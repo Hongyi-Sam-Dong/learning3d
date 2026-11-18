@@ -89,6 +89,16 @@ RUN pip install -c /opt/torch-constraints.txt \
 assert torch.version.cuda, 'CPU-only torch'; \
 print('torch', torch.__version__, '| cv2', cv2.__version__, '| plotly', plotly.__version__, '| numpy', numpy.__version__)"
 
+# Assignment 5 requirement not already installed above: tensorboard, which
+# train.py needs for torch.utils.tensorboard.SummaryWriter. Everything else in its
+# requirements.txt is already present. The dataset download tool (huggingface_hub)
+# is deliberately left out; it is only needed once.
+RUN pip install -c /opt/torch-constraints.txt "numpy<2.0.0" "tensorboard>=2.16,<3" \
+    && python -c "import torch, numpy, tensorboard; \
+from torch.utils.tensorboard import SummaryWriter; \
+assert torch.version.cuda, 'CPU-only torch'; \
+print('torch', torch.__version__, '| tensorboard', tensorboard.__version__, '| numpy', numpy.__version__)"
+
 # Non-root user matching the host user so files written to the bind mount keep
 # host ownership. Owning the venv lets the user `pip install` extras if needed.
 RUN groupadd --gid ${USER_GID} ${USERNAME} \

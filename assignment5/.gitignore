@@ -4,4 +4,11 @@ assignment5/
 */checkpoints
 */logs
 */output
-__MACOSX/
+__MACOSX/__pycache__/
+/checkpoints/
+/logs/
+/data_download/
+/scratch_setup/
+
+__pycache__/
+*.py[cod]

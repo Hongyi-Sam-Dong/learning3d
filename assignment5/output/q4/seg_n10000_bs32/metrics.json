@@ -1,0 +1,207 @@
+{
+  "task": "seg",
+  "arch": "point_transformer_compact_v1",
+  "num_objects": 617,
+  "accuracy": 0.9275607779578606,
+  "mean_object_accuracy": 0.9275607779578607,
+  "num_points_evaluated": 6170000,
+  "per_part_id_accuracy": {
+    "0": 0.9439766197741233,
+    "1": 0.15956770502225048,
+    "2": 0.9514084610583751,
+    "3": 0.8358102698029162,
+    "4": 0.930384879395942,
+    "5": 0.9304557659205336
+  },
+  "confusion_matrix_rows_gt_cols_pred": [
+    [
+      19057,
+      0,
+      98,
+      131,
+      606,
+      296
+    ],
+    [
+      0,
+      1255,
+      6610,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      417,
+      1876559,
+      19257,
+      14309,
+      61859
+    ],
+    [
+      11,
+      0,
+      33998,
+      470781,
+      11699,
+      46774
+    ],
+    [
+      799,
+      0,
+      11949,
+      11866,
+      1165642,
+      62604
+    ],
+    [
+      225,
+      0,
+      65314,
+      40099,
+      58029,
+      2189756
+    ]
+  ],
+  "part_id_colors": {
+    "0": "white",
+    "1": "magenta",
+    "2": "cyan",
+    "3": "yellow",
+    "4": "blue",
+    "5": "red"
+  },
+  "visualizations": [
+    {
+      "kind": "q2_selection",
+      "object_id": 50,
+      "q4_accuracy": 0.9434,
+      "gt_gif": "gifs/q2_selection_050_gt.gif",
+      "q4_gif": "gifs/q2_selection_050_q4.gif",
+      "q2_accuracy": 0.9095
+    },
+    {
+      "kind": "q2_selection",
+      "object_id": 177,
+      "q4_accuracy": 0.9312,
+      "gt_gif": "gifs/q2_selection_177_gt.gif",
+      "q4_gif": "gifs/q2_selection_177_q4.gif",
+      "q2_accuracy": 0.9188
+    },
+    {
+      "kind": "q2_selection",
+      "object_id": 602,
+      "q4_accuracy": 0.9703,
+      "gt_gif": "gifs/q2_selection_602_gt.gif",
+      "q4_gif": "gifs/q2_selection_602_q4.gif",
+      "q2_accuracy": 0.9431
+    },
+    {
+      "kind": "q2_selection",
+      "object_id": 351,
+      "q4_accuracy": 0.5057,
+      "gt_gif": "gifs/q2_selection_351_gt.gif",
+      "q4_gif": "gifs/q2_selection_351_q4.gif",
+      "q2_accuracy": 0.462
+    },
+    {
+      "kind": "q2_selection",
+      "object_id": 26,
+      "q4_accuracy": 0.6815,
+      "gt_gif": "gifs/q2_selection_026_gt.gif",
+      "q4_gif": "gifs/q2_selection_026_q4.gif",
+      "q2_accuracy": 0.4984
+    },
+    {
+      "kind": "q4_better",
+      "object_id": 60,
+      "q4_accuracy": 0.9624,
+      "gt_gif": "gifs/q4_better_060_gt.gif",
+      "q4_gif": "gifs/q4_better_060_q4.gif",
+      "q2_accuracy": 0.6975
+    },
+    {
+      "kind": "q4_better",
+      "object_id": 543,
+      "q4_accuracy": 0.8482,
+      "gt_gif": "gifs/q4_better_543_gt.gif",
+      "q4_gif": "gifs/q4_better_543_q4.gif",
+      "q2_accuracy": 0.6159
+    },
+    {
+      "kind": "q4_worse",
+      "object_id": 330,
+      "q4_accuracy": 0.6228,
+      "gt_gif": "gifs/q4_worse_330_gt.gif",
+      "q4_gif": "gifs/q4_worse_330_q4.gif",
+      "q2_accuracy": 0.8794
+    },
+    {
+      "kind": "q4_worse",
+      "object_id": 97,
+      "q4_accuracy": 0.5402,
+      "gt_gif": "gifs/q4_worse_097_gt.gif",
+      "q4_gif": "gifs/q4_worse_097_q4.gif",
+      "q2_accuracy": 0.7686
+    }
+  ],
+  "evaluation": "subset: one 10000-point input per object; accuracy over those points",
+  "selection": "q2_selection = the objects visualized in Q2; q4_better / q4_worse = largest per-object accuracy gain / loss vs Q2 on the same points",
+  "camera_and_color": "utils.render_view / utils.viz_seg, same part colors and gray background as Q2",
+  "chunked_full_object": null,
+  "settings": {
+    "checkpoint": {
+      "path": "./checkpoints/q4/seg_n10000_bs32/best_model.pt",
+      "sha256": "864448036aa098802962bedbb0a7222845507992e3ac3c39ac4402cbeaa37b0f",
+      "epoch": 155,
+      "val_acc": 0.9243358574610245,
+      "model_config": {
+        "arch": "point_transformer_compact_v1",
+        "task": "seg",
+        "num_classes": 6,
+        "k": 16,
+        "dims": [
+          32,
+          64,
+          128,
+          256,
+          512
+        ],
+        "stride": 4
+      },
+      "config": {
+        "task": "seg",
+        "num_points": 10000,
+        "batch_size": 32,
+        "k": 16,
+        "lr": 0.001,
+        "num_epochs": 250,
+        "val_frac": 0.1,
+        "seed": 0,
+        "num_workers": 0,
+        "num_cls_class": 3,
+        "num_seg_class": 6,
+        "device": "cuda",
+        "main_dir": "./data/",
+        "tag": "bs32",
+        "checkpoint_root": "./checkpoints/q4",
+        "log_root": "./logs/q4",
+        "checkpoint_every": 10,
+        "overwrite": false,
+        "resume": true,
+        "arch": "point_transformer_compact_v1",
+        "run_name": "seg_n10000_bs32",
+        "checkpoint_dir": "./checkpoints/q4/seg_n10000_bs32"
+      }
+    },
+    "num_points": 10000,
+    "num_available_points": 10000,
+    "seed": 0,
+    "batch_size": 8,
+    "device": "cuda",
+    "train_num_points": 10000,
+    "train_eval_points_match": true,
+    "point_sampling": "same as Q1/Q2: per-object permutation from numpy default_rng(seed) via utils.point_orders; the first num_points indices form one single model input per object",
+    "mode": "model.eval(), torch.no_grad(), batched over objects"
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "available": true,
+  "baseline_dir": "./output/q2_seg",
+  "baseline_accuracy": 0.9003974068071313,
+  "baseline_eval_checkpoint": "./checkpoints/seg/best_model.pt",
+  "baseline_eval_checkpoint_epoch": 248,
+  "baseline_eval_seed": 0,
+  "baseline_eval_num_points": 10000,
+  "q4_eval_seed": 0,
+  "q4_eval_num_points": 10000,
+  "seed_match": true,
+  "num_points_match": true,
+  "baseline_checkpoint_file": "./checkpoints/seg/best_model.pt",
+  "baseline_checkpoint_sha256": "348807d3234863eead8672fea955a02821af305aec93256f4e24632698962162",
+  "checkpoint_identity": "consistent: current file epoch/val_acc equal the values recorded by the baseline evaluation",
+  "training_differences": {},
+  "model": {
+    "baseline": "PointNet without T-Nets (models.py)",
+    "q4": "point_transformer_compact_v1"
+  },
+  "protocol_differences": [
+    "inference batch size 16 vs 8 (no effect on predictions in eval mode)"
+  ],
+  "matched_points": true,
+  "point_indices": "verified: Q4 indices equal the first 10000 of the 10000 stored Q2 indices per object",
+  "gt_consistent": true,
+  "baseline_accuracy_on_q4_points": 0.9003974068071313,
+  "q4_accuracy": 0.9275607779578606,
+  "baseline_mean_object_accuracy_on_q4_points": 0.9003974068071313,
+  "baseline_input_points": 10000,
+  "q4_input_points": 10000,
+  "matched_note": "identical point sets and inputs",
+  "objects_q4_better": 504,
+  "objects_q4_worse": 113,
+  "objects_equal": 0,
+  "points_both_correct": 5409650,
+  "points_q4_only": 313400,
+  "points_baseline_only": 145802,
+  "points_both_wrong": 301148
+}

@@ -1,0 +1,32 @@
+{
+  "disposable_state": true,
+  "task": "cls",
+  "arch": "point_transformer_compact_v1",
+  "num_points": 10000,
+  "batch_size": 32,
+  "k": 16,
+  "warmup_batches": 1,
+  "timed_batches": 2,
+  "timed_step_ms": [
+    692.9675903320312,
+    684.4891357421875
+  ],
+  "mean_step_ms": 688.7283630371094,
+  "timing_scope": "CUDA events around forward + loss + zero_grad + backward + optimizer.step; excludes data loading",
+  "data_loading_and_h2d_ms": [
+    0.5510420305654407,
+    0.5395379848778248
+  ],
+  "peak_allocated_gib": 8.656084060668945,
+  "peak_reserved_gib": 9.345703125,
+  "train_batches_per_epoch": 190,
+  "rough_epoch_train_minutes": 2.180973149617513,
+  "rough_total_train_hours": 9.087388123406305,
+  "num_epochs": 250,
+  "estimate_note": "rough extrapolation from 2 timed batch(es), not a measured epoch; validation, checkpointing, data loading, logging, startup and timing variability add overhead",
+  "device": "NVIDIA GB10",
+  "lr": 0.001,
+  "seed": 0,
+  "failed_attempts": [],
+  "note": "direct benchmark_once call: no automatic smaller-batch retry"
+}
